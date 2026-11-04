@@ -57,8 +57,13 @@ export function messageMail(l: Row, m: Row, authorEmail: string): Mail {
     p(`Cześć ${esc(l.nick)}!`, 16) +
     p(`<strong>${esc(m.sender_name)}</strong> odpisał(a) na Twoje ogłoszenie <strong>„${esc(l.title)}”</strong>:`) +
     quote(m.message) +
-    p(`Kliknij <strong>Odpowiedz</strong> w swojej poczcie, żeby napisać bezpośrednio do ${esc(first)}. Dopiero wtedy ta osoba zobaczy Twój adres e-mail.`, 14) +
-    button(`mailto:${m.sender_email}?subject=${encodeURIComponent("Re: " + l.title)}`, `Odpowiedz: ${first}`) +
+    // bez przycisku mailto: w Gmailu i części programów otwiera on obcą aplikację albo nic;
+    // zwykłe „Odpowiedz” działa wszędzie, bo mail ma reply-to nadawcy
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;"><tr>
+<td bgcolor="${C.lime}" style="background:${C.lime};border-radius:10px;padding:14px 16px;font-size:15px;line-height:1.55;color:${C.ink};">
+<strong>Jak odpowiedzieć?</strong> Kliknij <strong>Odpowiedz</strong> w swojej poczcie, tak jak przy zwykłym mailu. Odpowiedź trafi prosto do: ${esc(first)}.<br>
+<span style="font-size:13px;color:${C.muted};">Adres nadawcy: ${esc(m.sender_email)}. Twój adres zobaczy dopiero, gdy odpiszesz.</span>
+</td></tr></table>` +
     button(`${SITE}/#moje`, "Zamknij ogłoszenie, już znalazłam/em", true) +
     p(`To spam albo coś niepokojącego? Przekaż tego maila na <a href="mailto:office@cyrkarium.com" style="color:${C.green};">office@cyrkarium.com</a>. Twojego adresu nie udostępniliśmy nikomu.`, 12, C.muted) +
     p(`<em>${esc(first)} wrote about your listing. Hit Reply to answer directly; only then will they see your email address.</em>`, 12, C.muted);
