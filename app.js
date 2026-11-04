@@ -53,13 +53,17 @@
     box.innerHTML = text ? `<p class="msg ${kind}">${esc(text)}</p>` : "";
   }
 
-  // wykrywanie telefonów i e-maili w opisie (polityka: kontakt tylko przez linki)
+  // wykrywanie telefonów i e-maili w tekście (polityka: kontakt tylko przez linki i formularz).
+  // Telefon = ciąg cyfr, spacji i myślników z co najmniej 9 cyframi. Ta sama reguła
+  // jest w bazie (public.has_contact w 14_listings.sql), więc daty i ceny przechodzą.
   function contactInText(text) {
     const s = text || "";
-    const phone = /(\+?\d[\d\s().-]{7,}\d)/.test(s);
+    const phone = (s.match(/\+?\d[\d -]{7,}\d/g) || []).some((m) => m.replace(/\D/g, "").length >= 9);
     const mail = /[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(s);
     return [phone && t().phone, mail && t().email].filter(Boolean);
   }
+  const daysBetween = (a, b) => Math.floor((b - a) / 86400000);
+  const isLive = (l) => l.status === "approved" && new Date(l.expires_at) > new Date();
 
   // ---------------- 2. Baza, logowanie, dane ----------------
   const state = {
@@ -69,7 +73,19 @@
     loaded: false, loadFailed: false,
     filter: { disc: "all", q: "", level: "", kids: false },
     current: null,      // id otwartego profilu
+    listings: [],       // ogłoszenia, które baza pozwala przeczytać tej osobie
+    stats: {},          // liczba wiadomości przy moich ogłoszeniach
+    lfilter: { cat: "all", q: "" },
+    listingsLoaded: false,
   };
+
+  const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString();
+  const DEMO_LISTINGS = [
+    { id: "l1", category: "partner", title: "Partnerka do duetu na kole, poziom średni (przykład)", description: "Chcę przygotować duet na zawody wiosną. Trenuję 2 razy w tygodniu, mogę dojeżdżać do 30 km. Mam własne koło 90 cm.", city: "Poznań", nick: "Ola_hoop", price: null, status: "approved", created_at: inDays(-2), expires_at: inDays(58) },
+    { id: "l2", category: "gear", title: "Sprzedam szarfy 9 m, fioletowe (przykład)", description: "Używane jeden sezon, bez zaciągnięć. Odbiór osobisty albo wysyłka.", city: "Gdańsk", nick: "Marta", price: "450 zł", status: "approved", created_at: inDays(-5), expires_at: inDays(55) },
+    { id: "l3", category: "job", title: "Studio szuka instruktorki aerial hoop (przykład)", description: "Zajęcia we wtorki wieczorem, grupa początkująca, od stycznia.", city: "Łódź", nick: "Studio Lot", price: null, status: "approved", created_at: inDays(-8), expires_at: inDays(52) },
+    { id: "l4", category: "space", title: "Wynajmę salę z punktami do zawieszenia (przykład)", description: "Wysokość 6 m, 4 punkty, materace. Wolne weekendy i poranki w tygodniu.", city: "Warszawa", nick: "Hala Wzlot", price: "80 zł / h", status: "approved", created_at: inDays(-9), expires_at: inDays(51) },
+  ];
   const publicStudios = () => state.studios.filter((s) => s.status === "approved" && s.lat != null);
 
   const DEMO_STUDIOS = [
@@ -81,7 +97,7 @@
   ];
 
   async function initDb() {
-    if (DEMO) { state.studios = DEMO_STUDIOS; state.loaded = true; return; }
+    if (DEMO) { state.studios = DEMO_STUDIOS; state.loaded = true; state.listings = DEMO_LISTINGS; state.listingsLoaded = true; return; }
     state.sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
@@ -89,7 +105,7 @@
     await setUser(data.session?.user || null);
     state.sb.auth.onAuthStateChange((_e, session) => {
       const u = session?.user || null;
-      if ((u?.id || null) !== (state.user?.id || null)) setUser(u).then(() => loadStudios().then(route));
+      if ((u?.id || null) !== (state.user?.id || null)) setUser(u).then(() => Promise.all([loadStudios(), loadListings()]).then(route));
     });
   }
 
@@ -110,6 +126,19 @@
     if (error) { console.warn("studios:", error.message); state.loadFailed = true; state.studios = []; return; }
     state.loadFailed = false;
     state.studios = data || [];
+  }
+
+  async function loadListings() {
+    if (DEMO) return;
+    const { data, error } = await state.sb.from("listings").select("*").order("created_at", { ascending: false });
+    state.listingsLoaded = true;
+    if (error) { console.warn("listings:", error.message); state.listings = []; return; }
+    state.listings = data || [];
+    state.stats = {};
+    if (state.user) {
+      const { data: st } = await state.sb.rpc("my_listing_stats");
+      (st || []).forEach((r) => { state.stats[r.listing_id] = r.messages; });
+    }
   }
 
   async function loadEvents() {
@@ -157,20 +186,25 @@
   }
 
   // ---------------- 3. Nawigacja ----------------
-  const VIEWS = ["studia", "kalendarz", "ogloszenia", "dodaj-studio", "moje"];
+  const VIEWS = ["studia", "kalendarz", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "moje"];
   function route() {
     const h = decodeURIComponent(location.hash.slice(1));
     let view = "studia", id = null;
     if (h.startsWith("studio-")) { id = h.slice(7); }
+    else if (h.startsWith("ogloszenie-")) { view = "ogloszenie"; id = h.slice(11); }
+    else if (h.startsWith("edytuj-ogl-")) { view = "dodaj-ogloszenie"; id = h.slice(11); }
     else if (h.startsWith("edytuj-")) { view = "dodaj-studio"; id = h.slice(7); }
     else if (VIEWS.includes(h)) view = h;
 
     VIEWS.forEach((v) => { $("view-" + v).hidden = v !== view; });
-    const tab = view === "kalendarz" || view === "ogloszenia" ? view : "studia";
+    const tab = view === "kalendarz" ? "kalendarz" : view.includes("ogloszeni") ? "ogloszenia" : "studia";
     document.querySelectorAll(".sections a").forEach((a) => a.setAttribute("aria-selected", String(a.dataset.view === tab)));
 
     if (view === "studia") { state.current = id; renderStudios(); }
     else if (view === "kalendarz") renderCalendar();
+    else if (view === "ogloszenia") renderBoard();
+    else if (view === "ogloszenie") renderListing(id);
+    else if (view === "dodaj-ogloszenie") renderListingForm(id);
     else if (view === "dodaj-studio") renderForm(id);
     else if (view === "moje") renderMine();
   }
@@ -317,6 +351,134 @@
     box.innerHTML = state.events.length ? state.events.slice(0, 12).map(eventRow).join("") : `<p class="muted">${esc(t().calEmpty)}</p>`;
   }
 
+  // ---------------- 5b. Ogłoszenia ----------------
+  function catTag(c) { return `<span class="cat cat-${esc(c)}">${esc(t().cats[c] || c)}</span>`; }
+
+  function renderBoard() {
+    $("cat-chips").innerHTML = [["all", t().all], ...Object.entries(t().cats)]
+      .map(([k, v]) => `<button type="button" class="chip" data-lcat="${k}" aria-pressed="${state.lfilter.cat === k}">${esc(v)}</button>`).join("");
+    const live = state.listings.filter(isLive);
+    const q = cityKey(state.lfilter.q);
+    const list = live.filter((l) => (state.lfilter.cat === "all" || l.category === state.lfilter.cat)
+      && (!q || cityKey(l.title + " " + l.description + " " + l.city).includes(q)));
+    const box = $("listing-grid");
+    if (!state.listingsLoaded) { box.innerHTML = ""; return; }
+    if (!live.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardEmpty)}</p><a class="btn primary" href="#dodaj-ogloszenie">${esc(t().addListing)}</a></div>`; return; }
+    if (!list.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardNoMatch)}</p></div>`; return; }
+    const now = new Date();
+    box.innerHTML = list.map((l) => `<article class="card">
+      <div class="card-top">${catTag(l.category)}<span>${esc(t().ago(daysBetween(new Date(l.created_at), now)))}</span></div>
+      <h3>${esc(l.title)}</h3>
+      <p>${esc(l.description)}</p>
+      <div class="card-foot"><span class="who">${esc(l.nick)} · ${esc(l.city)}${l.price ? ` · <span class="price">${esc(l.price)}</span>` : ""}</span>
+        <a class="btn primary" href="#ogloszenie-${esc(l.id)}">${esc(t().write)}</a></div>
+    </article>`).join("");
+  }
+
+  function renderListing(id) {
+    const box = $("listing-box");
+    const l = state.listings.find((x) => String(x.id) === String(id));
+    const back = `<a class="back" href="#ogloszenia">${esc(t().backToBoard)}</a>`;
+    if (!state.listingsLoaded) { box.innerHTML = back; return; }
+    if (!l) { box.innerHTML = `<div class="view">${back}<p class="msg warn">${esc(t().listingGone)}</p></div>`; return; }
+    const own = state.user && l.created_by === state.user.id;
+    const left = daysBetween(new Date(), new Date(l.expires_at)) + 1;
+    const meta = [l.nick, l.city, t().ago(daysBetween(new Date(l.created_at), new Date())), isLive(l) ? t().expiresIn(left) : t().lStatus[l.status]].map(esc).join(" · ");
+    const report = `mailto:office@cyrkarium.com?subject=${encodeURIComponent(t().reportSubject + " " + l.id)}`;
+    let form;
+    if (own) form = `<div class="panel"><p class="msg ok">${esc(t().ownListing)}</p><a class="btn ghost" href="#moje">${esc(t().mine)}</a></div>`;
+    else if (!isLive(l)) form = `<div class="panel"><p class="msg warn">${esc(t().mErrClosed)}</p></div>`;
+    else form = `<form class="panel" id="msg-form" novalidate>
+      <h2>${esc(t().writeTo(l.nick))}</h2>
+      <div class="field"><label for="m-name">${esc(t().mName)}</label><input id="m-name" maxlength="60" autocomplete="given-name"></div>
+      <div class="field"><label for="m-mail">${esc(t().mEmail)}</label><input id="m-mail" type="email" maxlength="200" autocomplete="email"></div>
+      <div class="field"><label for="m-text">${esc(t().mText)}</label><textarea id="m-text" maxlength="2000"></textarea></div>
+      <label class="toggle"><input type="checkbox" id="m-ok"> <span class="small">${esc(t().mConsent)}</span></label>
+      <div id="m-status"></div>
+      <button type="submit" class="btn primary" id="m-send">${esc(t().mSend)}</button>
+      <p class="small" style="margin:0">${esc(t().mHint)}</p>
+    </form>`;
+    box.innerHTML = `<div class="view">${back}<div class="detail">
+      <section class="panel">
+        <div>${catTag(l.category)}</div>
+        <h1>${esc(l.title)}</h1>
+        <p class="small" style="margin:0">${meta}${l.price ? ` · <strong class="price">${esc(l.price)}</strong>` : ""}</p>
+        <p class="desc">${esc(l.description)}</p>
+        <a class="small" href="${esc(report)}">${esc(t().report)}</a>
+      </section>${form}</div></div>`;
+
+    $("msg-form")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const st = $("m-status");
+      const fail = (m) => { st.innerHTML = `<p class="msg bad" role="alert">${esc(m)}</p>`; };
+      const row = { listing_id: l.id, sender_name: $("m-name").value.trim(), sender_email: $("m-mail").value.trim(), message: $("m-text").value.trim(), consent: $("m-ok").checked, lang };
+      if (!row.sender_name || !row.sender_email || row.message.length < 5 || !row.consent) return fail(t().mErrRequired);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.sender_email)) return fail(t().mErrEmail);
+      const btn = $("m-send"); btn.disabled = true;
+      if (DEMO) { st.innerHTML = `<p class="msg ok">${esc(t().mSent(l.nick))} (demo)</p>`; return; }
+      const { error } = await state.sb.from("listing_messages").insert(row);
+      if (error) {
+        btn.disabled = false;
+        console.warn(error);
+        return fail(/too_many/.test(error.message) ? t().mErrTooMany : /listing_closed/.test(error.message) ? t().mErrClosed : t().errSave);
+      }
+      $("msg-form").innerHTML = `<p class="msg ok">${esc(t().mSent(l.nick))}</p>`;
+    });
+  }
+
+  function renderListingForm(id) {
+    const box = $("listing-form-box");
+    box.innerHTML = "";
+    if (!DEMO && !state.user) { box.appendChild(loginPanel(t().lLoginTitle)); return; }
+    const l = id ? state.listings.find((x) => String(x.id) === String(id)) : null;
+    const v = l || { category: "", nick: "" };
+    box.innerHTML = `<form class="panel" id="listing-form" novalidate>
+      <h2>${esc(l ? t().lFormEdit : t().lFormNew)}</h2>
+      <p class="muted" style="margin:0">${esc(t().lFormLede)}</p>
+      <div class="field"><label for="f-cat">${esc(t().lCat)}</label><select id="f-cat"><option value=""></option>${Object.entries(t().cats).map(([k, c]) => `<option value="${k}"${v.category === k ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-title">${esc(t().lTitle)}</label><input id="f-title" maxlength="120" value="${esc(v.title)}"></div>
+      <div class="field"><label for="f-desc">${esc(t().lDesc)}</label><textarea id="f-desc" maxlength="1500">${esc(v.description)}</textarea><p class="hint">${esc(t().lDescHint)}</p></div>
+      <div id="f-alert"></div>
+      <div class="row2">
+        <div class="field"><label for="f-nick">${esc(t().lNick)}</label><input id="f-nick" maxlength="40" value="${esc(v.nick)}"></div>
+        <div class="field"><label for="f-city">${esc(t().lCity)}</label><input id="f-city" maxlength="60" value="${esc(v.city)}"></div>
+      </div>
+      <div class="field"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
+      <p class="small" style="margin:0">${esc(t().emailPrivate)}</p>
+      <div id="f-msg"></div>
+      <div class="form-actions"><button type="submit" class="btn primary" id="f-submit">${esc(t().lSubmit)}</button><a class="btn ghost" href="${l ? "#moje" : "#ogloszenia"}">${esc(t().cancel)}</a></div>
+    </form>`;
+
+    const fields = ["f-title", "f-desc", "f-nick", "f-price"];
+    const check = () => {
+      const found = [...new Set(fields.flatMap((f) => contactInText($(f).value)))];
+      fields.forEach((f) => $(f).classList.toggle("err", contactInText($(f).value).length > 0));
+      $("f-alert").innerHTML = found.length ? `<p class="msg bad" role="alert">${esc(t().lErrContact(found.join(t().and)))}</p>` : "";
+      return found;
+    };
+    fields.forEach((f) => $(f).addEventListener("input", check));
+    if (l) check();
+
+    $("listing-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = $("f-msg");
+      const fail = (m) => { msg.innerHTML = `<p class="msg bad" role="alert">${esc(m)}</p>`; };
+      const val = (id) => $(id).value.trim();
+      const row = { category: val("f-cat"), title: val("f-title"), description: val("f-desc"), nick: val("f-nick"), city: val("f-city"), price: val("f-price") || null };
+      if (!row.category || row.title.length < 5 || row.description.length < 10 || row.nick.length < 2 || row.city.length < 2) return fail(t().lErrRequired);
+      const found = check();
+      if (found.length) return fail(t().lErrContact(found.join(t().and)));
+      if (DEMO) { msg.innerHTML = `<p class="msg ok">${esc(t().lSaved)} (demo)</p>`; return; }
+      const btn = $("f-submit"); btn.disabled = true; btn.textContent = t().saving;
+      const { error } = l ? await state.sb.from("listings").update(row).eq("id", l.id) : await state.sb.from("listings").insert(row);
+      btn.disabled = false; btn.textContent = t().lSubmit;
+      if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : /no_contact/.test(error.message) ? t().lErrContact(t().phone + t().and + t().email) : t().errSave); }
+      await loadListings();
+      location.hash = "#moje";
+      notice(t().lSaved);
+    });
+  }
+
   // ---------------- 6. Formularz studia ----------------
   const NOMINATIM = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&accept-language=pl&q=";
   async function geocode(q) {
@@ -430,20 +592,54 @@
     </div>`;
   }
 
+  function listingRow(l, admin) {
+    const st = l.status === "approved" && !isLive(l) ? "expired" : l.status;
+    const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
+    const n = state.stats[l.id] || 0;
+    return `<div class="mine-row">
+      <div class="mine-head"><strong>${esc(l.title)}</strong><span class="badge ${kind}">${esc(t().lStatus[st])}</span></div>
+      <span class="small">${esc(t().cats[l.category] || l.category)} · ${esc(l.nick)} · ${esc(l.city)}${l.price ? " · " + esc(l.price) : ""}${st === "approved" ? " · " + esc(t().expiresIn(daysBetween(new Date(), new Date(l.expires_at)) + 1)) : ""}</span>
+      <span class="small">${esc(l.description)}</span>
+      ${!admin ? `<span class="small"><strong>${esc(t().lMessages(n))}</strong></span>` : ""}
+      ${st === "rejected" && l.rejection_reason ? `<p class="msg bad">${esc(l.rejection_reason)}</p>` : ""}
+      <div class="form-actions">
+        ${admin ? `<button type="button" class="btn ok" data-lapprove="${esc(l.id)}">${esc(t().approve)}</button>
+          <span class="reason" style="flex:1 1 220px"><textarea id="lreason-${esc(l.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
+          <button type="button" class="btn bad" data-lreject="${esc(l.id)}">${esc(t().reject)}</button>`
+        : `${st === "approved" ? `<a class="btn ghost" href="#ogloszenie-${esc(l.id)}">${esc(t().show)}</a><button type="button" class="btn ghost" data-lclose="${esc(l.id)}">${esc(t().close)}</button>` : ""}
+          ${st === "pending" || st === "rejected" ? `<a class="btn ghost" href="#edytuj-ogl-${esc(l.id)}">${esc(t().edit)}</a>` : ""}
+          <button type="button" class="btn bad" data-lremove="${esc(l.id)}">${esc(t().remove)}</button>`}
+      </div>
+    </div>`;
+  }
+
   function renderMine() {
     const box = $("mine-box");
     box.innerHTML = "";
     if (DEMO) { box.innerHTML = `<p class="msg warn">demo</p>`; return; }
     if (!state.user) { box.appendChild(loginPanel(t().login)); return; }
-    const mine = state.studios.filter((s) => s.created_by === state.user.id);
-    let html = `<div class="mine"><div class="lead"><h1>${esc(t().mineTitle)}</h1><a class="btn primary" href="#dodaj-studio">${esc(t().addStudio)}</a></div>`;
-    html += mine.length ? mine.map((s) => mineRow(s, false)).join("") : `<p class="muted">${esc(t().mineEmpty)}</p>`;
+    const me = state.user.id;
+    const myStudios = state.studios.filter((s) => s.created_by === me);
+    const myListings = state.listings.filter((l) => l.created_by === me);
+    const h2 = (txt) => `<h2 style="font-size:20px;font-weight:400;margin-top:12px">${esc(txt)}</h2>`;
+    let html = `<div class="mine"><div class="lead"><h1>${esc(t().mineTitle)}</h1>
+      <span class="form-actions"><a class="btn primary" href="#dodaj-ogloszenie">${esc(t().addListing)}</a><a class="btn ghost" href="#dodaj-studio">${esc(t().addStudio)}</a></span></div>`;
+    html += h2(t().mineListings) + (myListings.length ? myListings.map((l) => listingRow(l, false)).join("") : `<p class="muted">${esc(t().mineListingsEmpty)}</p>`);
+    html += h2(t().mineStudios) + (myStudios.length ? myStudios.map((s) => mineRow(s, false)).join("") : `<p class="muted">${esc(t().mineEmpty)}</p>`);
     if (state.isAdmin) {
-      const pending = state.studios.filter((s) => s.status === "pending");
-      html += `<h2 style="font-size:20px;font-weight:400;margin-top:12px">${esc(t().modTitle)}</h2>`;
-      html += pending.length ? pending.map((s) => mineRow(s, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`;
+      const pl = state.listings.filter((l) => l.status === "pending");
+      const ps = state.studios.filter((s) => s.status === "pending");
+      html += h2(t().modListings) + (pl.length ? pl.map((l) => listingRow(l, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
+      html += h2(t().modStudios) + (ps.length ? ps.map((s) => mineRow(s, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
     }
     box.innerHTML = html + "</div>";
+  }
+
+  async function updateListing(id, patch) {
+    const { error } = await state.sb.from("listings").update(patch).eq("id", id);
+    if (error) { notice(t().errSave, "bad"); console.warn(error); return; }
+    await loadListings();
+    route();
   }
 
   async function updateStudio(id, patch) {
@@ -464,6 +660,19 @@
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
     else if (d.approve) updateStudio(d.approve, { status: "approved" });
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
+    else if (d.lcat) { state.lfilter.cat = d.lcat; renderBoard(); }
+    else if (d.lapprove) updateListing(d.lapprove, { status: "approved" });
+    else if (d.lreject) updateListing(d.lreject, { status: "rejected", rejection_reason: ($("lreason-" + d.lreject)?.value || "").trim() || null });
+    else if (d.lclose) {
+      if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().closeConfirm; return; }
+      updateListing(d.lclose, { status: "closed" });
+    }
+    else if (d.lremove) {
+      if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const { error } = await state.sb.from("listings").delete().eq("id", d.lremove);
+      if (error) { notice(t().errSave, "bad"); return; }
+      await loadListings(); renderMine();
+    }
     else if (d.remove) {
       if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
       const { error } = await state.sb.from("studios").delete().eq("id", d.remove);
@@ -474,6 +683,7 @@
   $("f-q").addEventListener("input", (e) => { state.filter.q = e.target.value; renderStudios(); });
   $("f-level").addEventListener("change", (e) => { state.filter.level = e.target.value; renderStudios(); });
   $("f-kids").addEventListener("change", (e) => { state.filter.kids = e.target.checked; renderStudios(); });
+  $("l-q").addEventListener("input", (e) => { state.lfilter.q = e.target.value; renderBoard(); });
   $("foot-events").href = CFG.eventsUrl;
   window.addEventListener("hashchange", () => { notice(""); route(); window.scrollTo({ top: 0 }); if (location.hash.startsWith("#studio-")) $("studio-profile").scrollIntoView({ block: "start" }); });
 
@@ -482,7 +692,7 @@
   route();
   (async () => {
     try { await initDb(); } catch (err) { console.warn(err); }
-    await Promise.all([loadStudios(), loadEvents()]);
+    await Promise.all([loadStudios(), loadEvents(), loadListings()]);
     route();
   })();
 })();
