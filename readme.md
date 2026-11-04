@@ -21,6 +21,9 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
 - `supabase/functions/aerial-notify/` – maile: wiadomości do autorów ogłoszeń, kolejka moderacji
 - `supabase/email-templates/` – wspólne maile logowania dla Aerial Events i tej strony (wklejane ręcznie w Supabase)
 - `polityka-prywatnosci.html` – polityka prywatności PL / EN
+- `kalendarz/` – pełny kalendarz: kopia strony Aerial Events (repozytorium aerial-events, wersja 7dd8a3a)
+  ze wspólnym nagłówkiem. Ta sama baza, więc oba adresy pokazują te same wydarzenia.
+  Po przełączeniu aerialevents.cyrkarium.com przekierowuje tutaj; dalsze zmiany kalendarza rób już w tym folderze.
 
 Podgląd bez bazy: dopisz `?demo=1` do adresu (przykładowe studia, nic się nie zapisuje).
 

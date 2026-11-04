@@ -197,6 +197,8 @@
     else if (h.startsWith("edytuj-ogl-")) { view = "dodaj-ogloszenie"; id = h.slice(11); }
     else if (h.startsWith("edytuj-")) { view = "dodaj-studio"; id = h.slice(7); }
     else if (VIEWS.includes(h)) view = h;
+    // stary podgląd kalendarza: teraz pełny kalendarz mieszka w podfolderze
+    if (view === "kalendarz") { location.replace("kalendarz/"); return; }
 
     VIEWS.forEach((v) => { $("view-" + v).hidden = v !== view; });
     const tab = view === "kalendarz" ? "kalendarz" : view.includes("ogloszeni") ? "ogloszenia" : "studia";

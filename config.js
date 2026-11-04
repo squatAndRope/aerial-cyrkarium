@@ -4,5 +4,5 @@
 window.AC_CONFIG = {
   supabaseUrl: "https://ggggimsfdusczeorobpm.supabase.co",
   supabaseAnonKey: "sb_publishable_4n51q63NUKKytiPWOX-UJg_ijE64Euu",
-  eventsUrl: "https://aerialevents.cyrkarium.com",
+  eventsUrl: "https://aerial.cyrkarium.com/kalendarz",  // pełny kalendarz (kopia Aerial Events w podfolderze)
 };
