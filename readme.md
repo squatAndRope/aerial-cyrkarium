@@ -17,7 +17,10 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
 - `supabase/sql/12_studios.sql` – tabela studiów
 - `supabase/sql/13_studios_seed.sql` – pierwsze studia (z publicznej mapy taniecwpowietrzu.pl, bez kontaktów)
 - `supabase/sql/14_listings.sql` – ogłoszenia i wiadomości do autorów
+- `supabase/sql/15_cleanup_cron.sql` – codzienne sprzątanie starych wiadomości i ogłoszeń (pg_cron)
 - `supabase/functions/aerial-notify/` – maile: wiadomości do autorów ogłoszeń, kolejka moderacji
+- `supabase/email-templates/` – wspólne maile logowania dla Aerial Events i tej strony (wklejane ręcznie w Supabase)
+- `polityka-prywatnosci.html` – polityka prywatności PL / EN
 
 Podgląd bez bazy: dopisz `?demo=1` do adresu (przykładowe studia, nic się nie zapisuje).
 

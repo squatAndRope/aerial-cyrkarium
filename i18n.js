@@ -16,6 +16,7 @@ window.AC_TEXTS = {
     tabStudios: "Studia",
     tabBoard: "Ogłoszenia",
     footer: "Aerial w Polsce · Fundacja Cyrkarium",
+    privacy: "Polityka prywatności",
 
     // studia
     studiosTitle: "Gdzie trenować aerial",
@@ -191,6 +192,7 @@ window.AC_TEXTS = {
     tabStudios: "Studios",
     tabBoard: "Board",
     footer: "Aerial in Poland · Fundacja Cyrkarium",
+    privacy: "Privacy policy",
 
     studiosTitle: "Where to train aerial",
     studiosCount: (n, c) => n === 0 ? "The map is just getting started. Add the first studio." : `${n} ${n === 1 ? "studio" : "studios"} in ${c} ${c === 1 ? "city" : "cities"}. Pick a discipline or tap a pin.`,

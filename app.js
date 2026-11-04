@@ -38,6 +38,8 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const cityKey = (c) => (c || "").toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/\s+/g, " ");
   const todayISO = () => new Date().toLocaleDateString("sv-SE");
+  const privacyHref = () => "polityka-prywatnosci.html" + (lang === "en" ? "#en" : "");
+  const privacyLink = () => ` <a href="${privacyHref()}" target="_blank" rel="noopener">${esc(t().privacy)}</a>`;
   const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? u : null);
 
   function applyTexts() {
@@ -170,7 +172,7 @@
       <form class="login" id="login-form" novalidate>
         <label for="login-email" class="small">${esc(t().emailLabel)}</label>
         <div class="login-row"><input id="login-email" type="email" autocomplete="email" required><button class="btn primary" type="submit">${esc(t().sendLink)}</button></div>
-        <p class="small" style="margin:0">${esc(t().emailPrivate)}</p>
+        <p class="small" style="margin:0">${esc(t().emailPrivate)}${privacyLink()}</p>
         <div id="login-msg"></div>
       </form>`;
     wrap.querySelector("form").addEventListener("submit", async (e) => {
@@ -396,7 +398,7 @@
       <label class="toggle"><input type="checkbox" id="m-ok"> <span class="small">${esc(t().mConsent)}</span></label>
       <div id="m-status"></div>
       <button type="submit" class="btn primary" id="m-send">${esc(t().mSend)}</button>
-      <p class="small" style="margin:0">${esc(t().mHint)}</p>
+      <p class="small" style="margin:0">${esc(t().mHint)}${privacyLink()}</p>
     </form>`;
     box.innerHTML = `<div class="view">${back}<div class="detail">
       <section class="panel">
@@ -444,7 +446,7 @@
         <div class="field"><label for="f-city">${esc(t().lCity)}</label><input id="f-city" maxlength="60" value="${esc(v.city)}"></div>
       </div>
       <div class="field"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
-      <p class="small" style="margin:0">${esc(t().emailPrivate)}</p>
+      <p class="small" style="margin:0">${esc(t().emailPrivate)}${privacyLink()}</p>
       <div id="f-msg"></div>
       <div class="form-actions"><button type="submit" class="btn primary" id="f-submit">${esc(t().lSubmit)}</button><a class="btn ghost" href="${l ? "#moje" : "#ogloszenia"}">${esc(t().cancel)}</a></div>
     </form>`;
@@ -654,7 +656,7 @@
     const b = e.target.closest("button");
     if (!b) return;
     const d = b.dataset;
-    if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); route(); }
+    if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
@@ -685,6 +687,8 @@
   $("f-kids").addEventListener("change", (e) => { state.filter.kids = e.target.checked; renderStudios(); });
   $("l-q").addEventListener("input", (e) => { state.lfilter.q = e.target.value; renderBoard(); });
   $("foot-events").href = CFG.eventsUrl;
+  const setPrivacyHref = () => { $("foot-privacy").href = privacyHref(); };
+  setPrivacyHref();
   window.addEventListener("hashchange", () => { notice(""); route(); window.scrollTo({ top: 0 }); if (location.hash.startsWith("#studio-")) $("studio-profile").scrollIntoView({ block: "start" }); });
 
   applyTexts();
