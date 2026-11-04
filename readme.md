@@ -25,6 +25,23 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
   ze wspólnym nagłówkiem. Ta sama baza, więc oba adresy pokazują te same wydarzenia.
   Po przełączeniu aerialevents.cyrkarium.com przekierowuje tutaj; dalsze zmiany kalendarza rób już w tym folderze.
 
+## Adresy
+
+| Adres | Co pokazuje |
+|---|---|
+| `/` | strona główna: trzy kafelki |
+| `/kalendarz/` | pełny kalendarz (osobny folder) |
+| `/studia/`, `/studia/<nazwa-miasto>` | mapa i profil studia |
+| `/studia/dodaj/`, `/studia/edytuj/<id>` | formularz studia |
+| `/ogloszenia/`, `/ogloszenia/<tytul>-<8 znaków id>` | tablica i ogłoszenie |
+| `/ogloszenia/dodaj/`, `/ogloszenia/edytuj/<id>` | formularz ogłoszenia |
+| `/moje/` | moje wpisy i moderacja |
+
+`/studia/…`, `/ogloszenia/…` i `/moje/` obsługuje `index.html` dzięki regule w `.htaccess`.
+Stare adresy z `#` (np. `#studio-<id>`, `#moje`) strona sama zamienia na nowe.
+Lokalnie zwykły `python3 -m http.server` tej reguły nie zna, więc podstrony trzeba otwierać
+przez serwer, który ją naśladuje (albo zaczynać od `/` i klikać).
+
 Podgląd bez bazy: dopisz `?demo=1` do adresu (przykładowe studia, nic się nie zapisuje).
 
 ## Baza

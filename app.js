@@ -3,9 +3,9 @@
    Spis treści
      1. Ustawienia, język, pomocnicze
      2. Baza (Supabase), logowanie, wczytywanie danych
-     3. Nawigacja (adres po #)
+     3. Nawigacja (prawdziwe adresy: /, /studia/…, /ogloszenia/…, /moje/)
      4. Studia: filtry, mapa, lista, profil
-     5. Kalendarz (podgląd z Aerial Events)
+     5. Wiersz wydarzenia (profil studia) i strona główna
      6. Formularz studia
      7. Moje studia i moderacja
      8. Start
@@ -38,9 +38,19 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const cityKey = (c) => (c || "").toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/\s+/g, " ");
   const todayISO = () => new Date().toLocaleDateString("sv-SE");
-  const privacyHref = () => "polityka-prywatnosci.html" + (lang === "en" ? "#en" : "");
+  const privacyHref = () => "/polityka-prywatnosci.html" + (lang === "en" ? "#en" : "");
   const privacyLink = () => ` <a href="${privacyHref()}" target="_blank" rel="noopener">${esc(t().privacy)}</a>`;
   const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? u : null);
+
+  // adresy: /studia/real-passion-krakow, /ogloszenia/sprzedam-szarfy-9m-981aa275
+  const slugify = (x) => cityKey(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70);
+  const studioSlug = (st) => slugify(st.name + " " + st.city) || String(st.id);
+  const studioPath = (st) => `/studia/${studioSlug(st)}`;
+  const listingPath = (l) => `/ogloszenia/${slugify(l.title).slice(0, 60)}-${String(l.id).slice(0, 8)}`;
+  // szukanie po ładnym adresie albo po samym id (stare linki z # i linki z maili)
+  const findStudio = (key) => state.studios.find((x) => studioSlug(x) === key) || state.studios.find((x) => String(x.id) === key);
+  const findListing = (key) => state.listings.find((x) => String(x.id) === key)
+    || state.listings.find((x) => String(x.id).startsWith(String(key).split("-").pop()));
 
   function applyTexts() {
     document.documentElement.lang = lang;
@@ -157,10 +167,10 @@
     const box = $("account");
     if (DEMO) { box.innerHTML = `<span class="badge warn">demo</span>`; return; }
     if (state.user) {
-      box.innerHTML = `<span class="who">${esc(state.user.email)}</span><a href="#moje">${esc(t().mine)}</a><button type="button" class="link" id="logout">${esc(t().logout)}</button>`;
-      $("logout").addEventListener("click", async () => { await state.sb.auth.signOut(); location.hash = "#studia"; });
+      box.innerHTML = `<span class="who">${esc(state.user.email)}</span><a href="/moje/">${esc(t().mine)}</a><button type="button" class="link" id="logout">${esc(t().logout)}</button>`;
+      $("logout").addEventListener("click", async () => { await state.sb.auth.signOut(); go("/"); });
     } else {
-      box.innerHTML = `<a href="#moje">${esc(t().login)}</a>`;
+      box.innerHTML = `<a href="/moje/">${esc(t().login)}</a>`;
     }
   }
 
@@ -188,29 +198,74 @@
   }
 
   // ---------------- 3. Nawigacja ----------------
-  const VIEWS = ["studia", "kalendarz", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "moje"];
-  function route() {
+  // Jedna strona obsługuje wszystkie adresy (reguła w .htaccess kieruje /studia/…, /ogloszenia/…
+  // i /moje/ do index.html). Linki wewnątrz przechodzą bez przeładowania (history.pushState).
+  const VIEWS = ["home", "studia", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "moje"];
+  const keep = DEMO ? "?demo=1" : "";
+
+  function go(path, replace = false) {
+    if (path !== location.pathname) history[replace ? "replaceState" : "pushState"](null, "", path + keep);
+    notice("");
+    route();
+    window.scrollTo({ top: 0 });
+    if (/^\/studia\/(?!dodaj|edytuj)[^/]+/.test(path) && !$("studio-profile").hidden) $("studio-profile").scrollIntoView({ block: "start" });
+  }
+
+  // stare adresy z # (pierwsza wersja strony, maile) → nowe ścieżki
+  function legacyPath() {
     const h = decodeURIComponent(location.hash.slice(1));
-    let view = "studia", id = null;
-    if (h.startsWith("studio-")) { id = h.slice(7); }
-    else if (h.startsWith("ogloszenie-")) { view = "ogloszenie"; id = h.slice(11); }
-    else if (h.startsWith("edytuj-ogl-")) { view = "dodaj-ogloszenie"; id = h.slice(11); }
-    else if (h.startsWith("edytuj-")) { view = "dodaj-studio"; id = h.slice(7); }
-    else if (VIEWS.includes(h)) view = h;
-    // stary podgląd kalendarza: teraz pełny kalendarz mieszka w podfolderze
-    if (view === "kalendarz") { location.replace("kalendarz/"); return; }
+    if (!h || /access_token|error/.test(h)) return null;      // powrót z logowania: tym zajmuje się Supabase
+    const fixed = { studia: "/studia/", ogloszenia: "/ogloszenia/", moje: "/moje/", "dodaj-studio": "/studia/dodaj/", "dodaj-ogloszenie": "/ogloszenia/dodaj/", kalendarz: "/kalendarz/" };
+    if (fixed[h]) return fixed[h];
+    if (h.startsWith("studio-")) return "/studia/" + h.slice(7);
+    if (h.startsWith("ogloszenie-")) return "/ogloszenia/" + h.slice(11);
+    if (h.startsWith("edytuj-ogl-")) return "/ogloszenia/edytuj/" + h.slice(11);
+    if (h.startsWith("edytuj-")) return "/studia/edytuj/" + h.slice(7);
+    return null;
+  }
+
+  function route() {
+    const old = legacyPath();
+    if (old) {
+      if (old.startsWith("/kalendarz")) { location.replace(old); return; }
+      history.replaceState(null, "", old + keep);
+    }
+    const parts = location.pathname.split("/").filter(Boolean);
+    let view = "home", id = null;
+    if (parts[0] === "studia") {
+      if (parts[1] === "dodaj") view = "dodaj-studio";
+      else if (parts[1] === "edytuj") { view = "dodaj-studio"; id = parts[2] || null; }
+      else { view = "studia"; id = parts[1] || null; }
+    } else if (parts[0] === "ogloszenia") {
+      if (parts[1] === "dodaj") view = "dodaj-ogloszenie";
+      else if (parts[1] === "edytuj") { view = "dodaj-ogloszenie"; id = parts[2] || null; }
+      else if (parts[1]) { view = "ogloszenie"; id = parts[1]; }
+      else view = "ogloszenia";
+    } else if (parts[0] === "moje") view = "moje";
 
     VIEWS.forEach((v) => { $("view-" + v).hidden = v !== view; });
-    const tab = view === "kalendarz" ? "kalendarz" : view.includes("ogloszeni") ? "ogloszenia" : "studia";
+    const tab = view.includes("ogloszeni") ? "ogloszenia" : view.includes("studi") ? "studia" : "";
     document.querySelectorAll(".sections a").forEach((a) => a.setAttribute("aria-selected", String(a.dataset.view === tab)));
+    const titles = { home: t().brand, studia: t().tabStudios, ogloszenia: t().tabBoard, ogloszenie: t().tabBoard, "dodaj-ogloszenie": t().addListing.replace("+ ", ""), "dodaj-studio": t().addStudio.replace("+ ", ""), moje: t().mine };
+    let title = titles[view];
 
-    if (view === "studia") { state.current = id; renderStudios(); }
-    else if (view === "kalendarz") renderCalendar();
+    if (view === "home") renderHome();
+    else if (view === "studia") {
+      const st = id ? findStudio(id) : null;
+      state.current = st ? st.id : null;
+      if (st) { title = st.name; if (location.pathname !== studioPath(st)) history.replaceState(null, "", studioPath(st) + keep); }
+      renderStudios();
+    }
     else if (view === "ogloszenia") renderBoard();
-    else if (view === "ogloszenie") renderListing(id);
+    else if (view === "ogloszenie") {
+      const l = state.listingsLoaded ? findListing(id) : null;
+      if (l) { title = l.title; if (location.pathname !== listingPath(l)) history.replaceState(null, "", listingPath(l) + keep); }
+      renderListing(l);
+    }
     else if (view === "dodaj-ogloszenie") renderListingForm(id);
     else if (view === "dodaj-studio") renderForm(id);
     else if (view === "moje") renderMine();
+    document.title = view === "home" ? `${t().brand} · Fundacja Cyrkarium` : `${title} · ${t().brand}`;
   }
 
   // ---------------- 4. Studia ----------------
@@ -244,7 +299,7 @@
 
     const box = $("studio-list");
     if (!state.loaded) box.innerHTML = "";
-    else if (!all.length) box.innerHTML = `<div class="empty"><p>${esc(t().emptyMap)}</p><a class="btn primary" href="#dodaj-studio">${esc(t().addStudio)}</a></div>`;
+    else if (!all.length) box.innerHTML = `<div class="empty"><p>${esc(t().emptyMap)}</p><a class="btn primary" href="/studia/dodaj/">${esc(t().addStudio)}</a></div>`;
     else if (!list.length) box.innerHTML = `<div class="empty"><p>${esc(t().noMatch)}</p><button type="button" class="btn ghost" id="clear-f">${esc(t().clearFilters)}</button></div>`;
     else box.innerHTML = list.map((s) => `<button type="button" class="st" data-st="${esc(s.id)}" aria-current="${s.id === state.current}">
         <span class="st-head"><strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
@@ -301,8 +356,8 @@
   }
 
   function openStudio(id) {
-    if (location.hash === "#studio-" + id) { state.current = id; renderStudios(); }
-    else location.hash = "#studio-" + id;
+    const st = state.studios.find((x) => String(x.id) === String(id));
+    if (st) go(studioPath(st));
   }
 
   function renderProfile() {
@@ -328,7 +383,7 @@
         ${links ? `<div class="links">${links}</div>` : ""}
         <p class="small">${esc(t().noContactNote)}</p>
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
-        ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="#edytuj-${esc(s.id)}">${esc(t().edit)}</a></div>` : ""}
+        ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studia/edytuj/${esc(s.id)}">${esc(t().edit)}</a></div>` : ""}
       </div>
       <div>
         <div class="linked"><h3>${esc(t().eventsHere(s.city))}</h3>
@@ -337,7 +392,7 @@
         </div>
         <button type="button" class="btn ghost" id="close-profile" style="align-self:flex-start">${esc(t().closeProfile)}</button>
       </div>`;
-    $("close-profile").addEventListener("click", () => { location.hash = "#studia"; });
+    $("close-profile").addEventListener("click", () => go("/studia/"));
   }
 
   // ---------------- 5. Kalendarz ----------------
@@ -349,10 +404,11 @@
     const url = safeUrl(e.reg_url) || CFG.eventsUrl;
     return `<a class="ev" href="${esc(url)}" target="_blank" rel="noopener nofollow">${dateBox(e.date_start)}<span class="ev-text"><strong>${esc(e.title)}</strong><span>${esc(e.city)}${e.venue ? " · " + esc(e.venue) : ""}</span></span></a>`;
   }
-  function renderCalendar() {
-    $("cal-link").href = CFG.eventsUrl;
-    const box = $("event-list");
-    box.innerHTML = state.events.length ? state.events.slice(0, 12).map(eventRow).join("") : `<p class="muted">${esc(t().calEmpty)}</p>`;
+  function renderHome() {
+    const set = (id, n, ready) => { $(id).textContent = ready ? String(n) : "–"; };
+    set("n-events", state.events.length, state.loaded);
+    set("n-studios", publicStudios().length, state.loaded);
+    set("n-listings", state.listings.filter(isLive).length, state.listingsLoaded);
   }
 
   // ---------------- 5b. Ogłoszenia ----------------
@@ -367,7 +423,7 @@
       && (!q || cityKey(l.title + " " + l.description + " " + l.city).includes(q)));
     const box = $("listing-grid");
     if (!state.listingsLoaded) { box.innerHTML = ""; return; }
-    if (!live.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardEmpty)}</p><a class="btn primary" href="#dodaj-ogloszenie">${esc(t().addListing)}</a></div>`; return; }
+    if (!live.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardEmpty)}</p><a class="btn primary" href="/ogloszenia/dodaj/">${esc(t().addListing)}</a></div>`; return; }
     if (!list.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardNoMatch)}</p></div>`; return; }
     const now = new Date();
     box.innerHTML = list.map((l) => `<article class="card">
@@ -375,14 +431,13 @@
       <h3>${esc(l.title)}</h3>
       <p>${esc(l.description)}</p>
       <div class="card-foot"><span class="who">${esc(l.nick)} · ${esc(l.city)}${l.price ? ` · <span class="price">${esc(l.price)}</span>` : ""}</span>
-        <a class="btn primary" href="#ogloszenie-${esc(l.id)}">${esc(t().write)}</a></div>
+        <a class="btn primary" href="${esc(listingPath(l))}">${esc(t().write)}</a></div>
     </article>`).join("");
   }
 
-  function renderListing(id) {
+  function renderListing(l) {
     const box = $("listing-box");
-    const l = state.listings.find((x) => String(x.id) === String(id));
-    const back = `<a class="back" href="#ogloszenia">${esc(t().backToBoard)}</a>`;
+    const back = `<a class="back" href="/ogloszenia/">${esc(t().backToBoard)}</a>`;
     if (!state.listingsLoaded) { box.innerHTML = back; return; }
     if (!l) { box.innerHTML = `<div class="view">${back}<p class="msg warn">${esc(t().listingGone)}</p></div>`; return; }
     const own = state.user && l.created_by === state.user.id;
@@ -390,7 +445,7 @@
     const meta = [l.nick, l.city, t().ago(daysBetween(new Date(l.created_at), new Date())), isLive(l) ? t().expiresIn(left) : t().lStatus[l.status]].map(esc).join(" · ");
     const report = `mailto:office@cyrkarium.com?subject=${encodeURIComponent(t().reportSubject + " " + l.id)}`;
     let form;
-    if (own) form = `<div class="panel"><p class="msg ok">${esc(t().ownListing)}</p><a class="btn ghost" href="#moje">${esc(t().mine)}</a></div>`;
+    if (own) form = `<div class="panel"><p class="msg ok">${esc(t().ownListing)}</p><a class="btn ghost" href="/moje/">${esc(t().mine)}</a></div>`;
     else if (!isLive(l)) form = `<div class="panel"><p class="msg warn">${esc(t().mErrClosed)}</p></div>`;
     else form = `<form class="panel" id="msg-form" novalidate>
       <h2>${esc(t().writeTo(l.nick))}</h2>
@@ -450,7 +505,7 @@
       <div class="field"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
       <p class="small" style="margin:0">${esc(t().emailPrivate)}${privacyLink()}</p>
       <div id="f-msg"></div>
-      <div class="form-actions"><button type="submit" class="btn primary" id="f-submit">${esc(t().lSubmit)}</button><a class="btn ghost" href="${l ? "#moje" : "#ogloszenia"}">${esc(t().cancel)}</a></div>
+      <div class="form-actions"><button type="submit" class="btn primary" id="f-submit">${esc(t().lSubmit)}</button><a class="btn ghost" href="${l ? "/moje/" : "/ogloszenia/"}">${esc(t().cancel)}</a></div>
     </form>`;
 
     const fields = ["f-title", "f-desc", "f-nick", "f-price"];
@@ -478,7 +533,7 @@
       btn.disabled = false; btn.textContent = t().lSubmit;
       if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : /no_contact/.test(error.message) ? t().lErrContact(t().phone + t().and + t().email) : t().errSave); }
       await loadListings();
-      location.hash = "#moje";
+      go("/moje/");
       notice(t().lSaved);
     });
   }
@@ -521,7 +576,7 @@
       <p class="hint" style="margin:0">${esc(t().fLinksHint)}</p>
       <label class="toggle"><input type="checkbox" id="s-consent"${s ? " checked" : ""}> <span class="small">${esc(t().fConsent)}</span></label>
       <div id="form-msg"></div>
-      <div class="form-actions"><button type="submit" class="btn primary" id="s-submit">${esc(t().submit)}</button><a class="btn ghost" href="${s ? "#moje" : "#studia"}">${esc(t().cancel)}</a></div>
+      <div class="form-actions"><button type="submit" class="btn primary" id="s-submit">${esc(t().submit)}</button><a class="btn ghost" href="${s ? "/moje/" : "/studia/"}">${esc(t().cancel)}</a></div>
     </form>`;
 
     const desc = $("s-desc");
@@ -570,7 +625,7 @@
       done();
       if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : t().errSave); }
       await loadStudios();
-      location.hash = "#moje";
+      go("/moje/");
       notice(t().saved);
     });
   }
@@ -589,8 +644,8 @@
         ${admin ? `<button type="button" class="btn ok" data-approve="${esc(s.id)}">${esc(t().approve)}</button>
           <span class="reason" style="flex:1 1 220px"><textarea id="reason-${esc(s.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
           <button type="button" class="btn bad" data-reject="${esc(s.id)}">${esc(t().reject)}</button>`
-        : `${st === "approved" ? `<a class="btn ghost" href="#studio-${esc(s.id)}">${esc(t().showOnMap)}</a>` : ""}
-          <a class="btn ghost" href="#edytuj-${esc(s.id)}">${esc(t().edit)}</a>
+        : `${st === "approved" ? `<a class="btn ghost" href="${esc(studioPath(s))}">${esc(t().showOnMap)}</a>` : ""}
+          <a class="btn ghost" href="/studia/edytuj/${esc(s.id)}">${esc(t().edit)}</a>
           <button type="button" class="btn bad" data-remove="${esc(s.id)}">${esc(t().remove)}</button>`}
       </div>
     </div>`;
@@ -610,8 +665,8 @@
         ${admin ? `<button type="button" class="btn ok" data-lapprove="${esc(l.id)}">${esc(t().approve)}</button>
           <span class="reason" style="flex:1 1 220px"><textarea id="lreason-${esc(l.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
           <button type="button" class="btn bad" data-lreject="${esc(l.id)}">${esc(t().reject)}</button>`
-        : `${st === "approved" ? `<a class="btn ghost" href="#ogloszenie-${esc(l.id)}">${esc(t().show)}</a><button type="button" class="btn ghost" data-lclose="${esc(l.id)}">${esc(t().close)}</button>` : ""}
-          ${st === "pending" || st === "rejected" ? `<a class="btn ghost" href="#edytuj-ogl-${esc(l.id)}">${esc(t().edit)}</a>` : ""}
+        : `${st === "approved" ? `<a class="btn ghost" href="${esc(listingPath(l))}">${esc(t().show)}</a><button type="button" class="btn ghost" data-lclose="${esc(l.id)}">${esc(t().close)}</button>` : ""}
+          ${st === "pending" || st === "rejected" ? `<a class="btn ghost" href="/ogloszenia/edytuj/${esc(l.id)}">${esc(t().edit)}</a>` : ""}
           <button type="button" class="btn bad" data-lremove="${esc(l.id)}">${esc(t().remove)}</button>`}
       </div>
     </div>`;
@@ -627,7 +682,7 @@
     const myListings = state.listings.filter((l) => l.created_by === me);
     const h2 = (txt) => `<h2 style="font-size:20px;font-weight:400;margin-top:12px">${esc(txt)}</h2>`;
     let html = `<div class="mine"><div class="lead"><h1>${esc(t().mineTitle)}</h1>
-      <span class="form-actions"><a class="btn primary" href="#dodaj-ogloszenie">${esc(t().addListing)}</a><a class="btn ghost" href="#dodaj-studio">${esc(t().addStudio)}</a></span></div>`;
+      <span class="form-actions"><a class="btn primary" href="/ogloszenia/dodaj/">${esc(t().addListing)}</a><a class="btn ghost" href="/studia/dodaj/">${esc(t().addStudio)}</a></span></div>`;
     html += h2(t().mineListings) + (myListings.length ? myListings.map((l) => listingRow(l, false)).join("") : `<p class="muted">${esc(t().mineListingsEmpty)}</p>`);
     html += h2(t().mineStudios) + (myStudios.length ? myStudios.map((s) => mineRow(s, false)).join("") : `<p class="muted">${esc(t().mineEmpty)}</p>`);
     if (state.isAdmin) {
@@ -691,7 +746,17 @@
   $("foot-events").href = CFG.eventsUrl;
   const setPrivacyHref = () => { $("foot-privacy").href = privacyHref(); };
   setPrivacyHref();
-  window.addEventListener("hashchange", () => { notice(""); route(); window.scrollTo({ top: 0 }); if (location.hash.startsWith("#studio-")) $("studio-profile").scrollIntoView({ block: "start" }); });
+  // linki wewnętrzne bez przeładowania; /kalendarz/ i polityka ładują się normalnie
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[href]");
+    if (!a || a.target || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || !/^\/(studia|ogloszenia|moje)?(\/|$)/.test(url.pathname) || url.hash) return;
+    e.preventDefault();
+    go(url.pathname);
+  });
+  window.addEventListener("popstate", () => { notice(""); route(); });
+  window.addEventListener("hashchange", () => { if (legacyPath()) route(); });
 
   applyTexts();
   renderAccount();

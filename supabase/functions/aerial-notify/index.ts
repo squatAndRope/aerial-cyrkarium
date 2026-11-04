@@ -64,7 +64,7 @@ export function messageMail(l: Row, m: Row, authorEmail: string): Mail {
 <strong>Jak odpowiedzieć?</strong> Kliknij <strong>Odpowiedz</strong> w swojej poczcie, tak jak przy zwykłym mailu. Odpowiedź trafi prosto do: ${esc(first)}.<br>
 <span style="font-size:13px;color:${C.muted};">Adres nadawcy: ${esc(m.sender_email)}. Twój adres zobaczy dopiero, gdy odpiszesz.</span>
 </td></tr></table>` +
-    button(`${SITE}/#moje`, "Zamknij ogłoszenie, już znalazłam/em", true) +
+    button(`${SITE}/moje/`, "Zamknij ogłoszenie, już znalazłam/em", true) +
     p(`To spam albo coś niepokojącego? Przekaż tego maila na <a href="mailto:office@cyrkarium.com" style="color:${C.green};">office@cyrkarium.com</a>. Twojego adresu nie udostępniliśmy nikomu.`, 12, C.muted) +
     p(`<em>${esc(first)} wrote about your listing. Hit Reply to answer directly; only then will they see your email address.</em>`, 12, C.muted);
   return {
@@ -72,7 +72,7 @@ export function messageMail(l: Row, m: Row, authorEmail: string): Mail {
     reply_to: m.sender_email,
     subject: `Nowa wiadomość: ${l.title}`,
     html: layout(inner),
-    text: `${m.sender_name} odpisał(a) na Twoje ogłoszenie „${l.title}”:\n\n${m.message}\n\nOdpowiedz na tego maila, żeby napisać bezpośrednio do nadawcy.\nZamknij ogłoszenie: ${SITE}/#moje`,
+    text: `${m.sender_name} odpisał(a) na Twoje ogłoszenie „${l.title}”:\n\n${m.message}\n\nOdpowiedz na tego maila, żeby napisać bezpośrednio do nadawcy.\nZamknij ogłoszenie: ${SITE}/moje/`,
   };
 }
 
@@ -85,8 +85,8 @@ export function adminListingMail(l: Row, edited: boolean, admins: string[]): Mai
   return {
     to: admins,
     subject: `${edited ? "Poprawione" : "Nowe"} ogłoszenie: ${l.title} (${l.city})`,
-    html: layout(p(lead) + listingCard(l) + button(`${SITE}/#moje`, "Otwórz kolejkę")),
-    text: `${lead}\n\n${l.title}\n${l.city} · ${l.nick}\n\n${l.description}\n\n${SITE}/#moje`,
+    html: layout(p(lead) + listingCard(l) + button(`${SITE}/moje/`, "Otwórz kolejkę")),
+    text: `${lead}\n\n${l.title}\n${l.city} · ${l.nick}\n\n${l.description}\n\n${SITE}/moje/`,
   };
 }
 
@@ -96,8 +96,8 @@ export function authorListingMail(l: Row, to: string): Mail {
       to: [to],
       subject: `Opublikowane: ${l.title}`,
       html: layout(p("Cześć!", 16) + p("Twoje ogłoszenie jest już na tablicy. Wiadomości od chętnych będą przychodzić na ten adres, a na stronie nikt go nie zobaczy.") + listingCard(l) +
-        p("Ogłoszenie zniknie samo po 60 dniach. Gdy znajdziesz to, czego szukasz, zamknij je w „Moich wpisach”.", 14, C.muted) + button(`${SITE}/#ogloszenie-${l.id}`, "Zobacz ogłoszenie")),
-      text: `Twoje ogłoszenie „${l.title}” jest już na tablicy: ${SITE}/#ogloszenie-${l.id}`,
+        p("Ogłoszenie zniknie samo po 60 dniach. Gdy znajdziesz to, czego szukasz, zamknij je w „Moich wpisach”.", 14, C.muted) + button(`${SITE}/ogloszenia/${l.id}`, "Zobacz ogłoszenie")),
+      text: `Twoje ogłoszenie „${l.title}” jest już na tablicy: ${SITE}/ogloszenia/${l.id}`,
     };
   }
   const reason = String(l.rejection_reason ?? "").trim();
@@ -105,8 +105,8 @@ export function authorListingMail(l: Row, to: string): Mail {
     to: [to],
     subject: `Ogłoszenie nieopublikowane: ${l.title}`,
     html: layout(p("Cześć!", 16) + p(`Tym razem nie możemy opublikować ogłoszenia <strong>„${esc(l.title)}”</strong>.`) + (reason ? quote("Powód: " + reason) : "") +
-      p("Możesz je poprawić i wysłać ponownie. Jeśli masz pytania, napisz na office@cyrkarium.com.", 14) + button(`${SITE}/#moje`, "Popraw ogłoszenie")),
-    text: `Nie możemy opublikować ogłoszenia „${l.title}”.${reason ? "\nPowód: " + reason : ""}\n\nPopraw: ${SITE}/#moje`,
+      p("Możesz je poprawić i wysłać ponownie. Jeśli masz pytania, napisz na office@cyrkarium.com.", 14) + button(`${SITE}/moje/`, "Popraw ogłoszenie")),
+    text: `Nie możemy opublikować ogłoszenia „${l.title}”.${reason ? "\nPowód: " + reason : ""}\n\nPopraw: ${SITE}/moje/`,
   };
 }
 
@@ -116,8 +116,8 @@ export function adminStudioMail(s: Row, edited: boolean, admins: string[]): Mail
   return {
     to: admins,
     subject: `${edited ? "Poprawione" : "Nowe"} studio: ${s.name} (${s.city})`,
-    html: layout(p(lead) + quote(`${s.name}\n${s.city}${s.address ? ", " + s.address : ""}\n\n${s.description ?? ""}\n\n${links}`) + button(`${SITE}/#moje`, "Otwórz kolejkę")),
-    text: `${lead}\n\n${s.name}, ${s.city}\n${links}\n\n${SITE}/#moje`,
+    html: layout(p(lead) + quote(`${s.name}\n${s.city}${s.address ? ", " + s.address : ""}\n\n${s.description ?? ""}\n\n${links}`) + button(`${SITE}/moje/`, "Otwórz kolejkę")),
+    text: `${lead}\n\n${s.name}, ${s.city}\n${links}\n\n${SITE}/moje/`,
   };
 }
 

@@ -264,3 +264,16 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .detail h1 { font-size: clamp(22px, 3.4vw, 30px); font-weight: 300; line-height: 1.2; overflow-wrap: anywhere; }
 .detail .desc { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .back { align-self: flex-start; color: var(--accent); font-weight: 700; text-decoration: none; }
+
+/* ---------- 11. Strona główna: trzy kafelki ---------- */
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .trio { grid-template-columns: 1fr; } }
+.tile { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; color: #FFFFFF; text-decoration: none; min-width: 0; }
+.tile h2 { font-size: 18px; font-weight: 500; }
+.tile p { margin: 0; font-size: 14px; opacity: .9; }
+.tile .num { font-family: var(--font-display); font-size: 34px; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile-cta { margin-top: auto; padding-top: 6px; color: var(--lime); font-weight: 700; font-size: 14px; }
+.t-cal { background: var(--violet); }
+.t-map { background: var(--plum); }
+.t-mkt { background: var(--green); }
+@media (prefers-reduced-motion: no-preference) { .tile { transition: transform .15s; } .tile:hover { transform: translateY(-2px); } }
