@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Unbounded:wght@300;500&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach.
-       Ścieżki zaczynają się od /, bo ta sama strona obsługuje też /studia/… i /ogloszenia/… (.htaccess). -->
-  <link rel="stylesheet" href="/styles.css?v=5">
+       Ścieżki zaczynają się od /, bo ta sama strona obsługuje też /studios/…, /board/… i /account/ (.htaccess). -->
+  <link rel="stylesheet" href="/styles.css?v=6">
 </head>
 <body>
 <div class="wrap">
@@ -39,9 +39,9 @@
         </div>
       </header>
       <nav class="sections" role="tablist" data-aria="ariaSections">
-        <a role="tab" href="/kalendarz/" data-view="kalendarz"><span class="dot dot-cal" aria-hidden="true"></span><span data-i="tabCalendar"></span></a>
-        <a role="tab" href="/studia/" data-view="studia"><span class="dot dot-map" aria-hidden="true"></span><span data-i="tabStudios"></span></a>
-        <a role="tab" href="/ogloszenia/" data-view="ogloszenia"><span class="dot dot-mkt" aria-hidden="true"></span><span data-i="tabBoard"></span></a>
+        <a role="tab" href="/calendar/" data-view="calendar"><span class="dot dot-cal" aria-hidden="true"></span><span data-i="tabCalendar"></span></a>
+        <a role="tab" href="/studios/" data-view="studios"><span class="dot dot-map" aria-hidden="true"></span><span data-i="tabStudios"></span></a>
+        <a role="tab" href="/board/" data-view="board"><span class="dot dot-mkt" aria-hidden="true"></span><span data-i="tabBoard"></span></a>
       </nav>
     </div>
   </div>
@@ -57,19 +57,19 @@
       </div>
     </div>
     <div class="trio">
-      <a class="tile t-cal" href="/kalendarz/">
+      <a class="tile t-cal" href="/calendar/">
         <span class="num" id="n-events">–</span>
         <h2 data-i="tileCal"></h2>
         <p data-i="tileCalText"></p>
         <span class="tile-cta" data-i="tileCalCta"></span>
       </a>
-      <a class="tile t-map" href="/studia/">
+      <a class="tile t-map" href="/studios/">
         <span class="num" id="n-studios">–</span>
         <h2 data-i="tileStudios"></h2>
         <p data-i="tileStudiosText"></p>
         <span class="tile-cta" data-i="tileStudiosCta"></span>
       </a>
-      <a class="tile t-mkt" href="/ogloszenia/">
+      <a class="tile t-mkt" href="/board/">
         <span class="num" id="n-listings">–</span>
         <h2 data-i="tileBoard"></h2>
         <p data-i="tileBoardText"></p>
@@ -85,7 +85,7 @@
         <h1 data-i="studiosTitle"></h1>
         <p id="studios-count" class="muted"></p>
       </div>
-      <a class="btn primary" href="/studia/dodaj/" data-i="addStudio"></a>
+      <a class="btn primary" href="/studios/add/" data-i="addStudio"></a>
     </div>
     <div class="filters">
       <div class="chips" id="disc-chips"></div>
@@ -119,7 +119,7 @@
         <h1 data-i="boardTitle"></h1>
         <p class="muted" data-i="boardLede"></p>
       </div>
-      <a class="btn primary" href="/ogloszenia/dodaj/" data-i="addListing"></a>
+      <a class="btn primary" href="/board/add/" data-i="addListing"></a>
     </div>
     <ul class="promise">
       <li data-i="boardP1"></li>
@@ -165,7 +165,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/config.js"></script>
-<script src="/i18n.js?v=5"></script>
-<script src="/app.js?v=5"></script>
+<script src="/i18n.js?v=6"></script>
+<script src="/app.js?v=6"></script>
 </body>
 </html>

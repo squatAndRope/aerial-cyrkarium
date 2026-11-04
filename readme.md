@@ -21,7 +21,7 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
 - `supabase/functions/aerial-notify/` – maile: wiadomości do autorów ogłoszeń, kolejka moderacji
 - `supabase/email-templates/` – wspólne maile logowania dla Aerial Events i tej strony (wklejane ręcznie w Supabase)
 - `polityka-prywatnosci.html` – polityka prywatności PL / EN
-- `kalendarz/` – pełny kalendarz: kopia strony Aerial Events (repozytorium aerial-events, wersja 7dd8a3a)
+- `calendar/` – pełny kalendarz: kopia strony Aerial Events (repozytorium aerial-events, wersja 7dd8a3a)
   ze wspólnym nagłówkiem. Ta sama baza, więc oba adresy pokazują te same wydarzenia.
   Po przełączeniu aerialevents.cyrkarium.com przekierowuje tutaj; dalsze zmiany kalendarza rób już w tym folderze.
 
@@ -30,14 +30,17 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
 | Adres | Co pokazuje |
 |---|---|
 | `/` | strona główna: trzy kafelki |
-| `/kalendarz/` | pełny kalendarz (osobny folder) |
-| `/studia/`, `/studia/<nazwa-miasto>` | mapa i profil studia |
-| `/studia/dodaj/`, `/studia/edytuj/<id>` | formularz studia |
-| `/ogloszenia/`, `/ogloszenia/<tytul>-<8 znaków id>` | tablica i ogłoszenie |
-| `/ogloszenia/dodaj/`, `/ogloszenia/edytuj/<id>` | formularz ogłoszenia |
-| `/moje/` | moje wpisy i moderacja |
+| `/calendar/` | pełny kalendarz (osobny folder) |
+| `/studios/`, `/studios/<nazwa-miasto>` | mapa i profil studia |
+| `/studios/add/`, `/studios/edit/<id>` | formularz studia |
+| `/board/`, `/board/<tytul>-<8 znaków id>` | tablica i ogłoszenie |
+| `/board/add/`, `/board/edit/<id>` | formularz ogłoszenia |
+| `/account/` | moje wpisy i moderacja |
 
-`/studia/…`, `/ogloszenia/…` i `/moje/` obsługuje `index.html` dzięki regule w `.htaccess`.
+Nazwy ścieżek są po angielsku i wspólne dla wszystkich wersji językowych (język wybiera się
+przełącznikiem PL / EN, nie adresem). `/studios/…`, `/board/…` i `/account/` obsługuje `index.html`
+dzięki regule w `.htaccess`. Stare polskie ścieżki (`/studia/…`, `/ogloszenia/…`, `/moje/`,
+`/kalendarz/`) przekierowuje `.htaccess`.
 Stare adresy z `#` (np. `#studio-<id>`, `#moje`) strona sama zamienia na nowe.
 Lokalnie zwykły `python3 -m http.server` tej reguły nie zna, więc podstrony trzeba otwierać
 przez serwer, który ją naśladuje (albo zaczynać od `/` i klikać).

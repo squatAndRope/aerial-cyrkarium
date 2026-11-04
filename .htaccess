@@ -7,7 +7,19 @@ RedirectMatch 404 (?i)^/readme\.md$
 RedirectMatch 404 ^/\.gitignore$
 RedirectMatch 404 ^/\.htaccess$
 
-# Ładne adresy: /studia/…, /ogloszenia/… i /moje/ obsługuje ta sama strona (index.html),
-# która czyta adres i pokazuje właściwy widok. /kalendarz/ to prawdziwy folder.
+# Stare polskie ścieżki (pierwsze dni strony) → angielskie, na stałe (301).
+# Kolejność ma znaczenie: najpierw dokładniejsze reguły.
+RedirectMatch 301 ^/kalendarz(/.*)?$ /calendar$1
+RedirectMatch 301 ^/studia/dodaj/?$ /studios/add/
+RedirectMatch 301 ^/studia/edytuj/(.+)$ /studios/edit/$1
+RedirectMatch 301 ^/studia(/.*)?$ /studios$1
+RedirectMatch 301 ^/ogloszenia/dodaj/?$ /board/add/
+RedirectMatch 301 ^/ogloszenia/edytuj/(.+)$ /board/edit/$1
+RedirectMatch 301 ^/ogloszenia(/.*)?$ /board$1
+RedirectMatch 301 ^/moje(/.*)?$ /account/
+
+# Ładne adresy: /studios/…, /board/… i /account/ obsługuje ta sama strona (index.html),
+# która czyta adres i pokazuje właściwy widok. /calendar/ to prawdziwy folder.
+# Nazwy ścieżek są po angielsku i wspólne dla wszystkich wersji językowych.
 RewriteEngine On
-RewriteRule ^(studia|ogloszenia|moje)(/.*)?$ /index.html [L]
+RewriteRule ^(studios|board|account)(/.*)?$ /index.html [L]
