@@ -17,6 +17,8 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
 - `supabase/sql/12_studios.sql` – tabela studiów
 - `supabase/sql/13_studios_seed.sql` – pierwsze studia (z publicznej mapy taniecwpowietrzu.pl, bez kontaktów)
 - `supabase/sql/14_listings.sql` – ogłoszenia i wiadomości do autorów
+- `supabase/sql/16_listing_kind.sql`, `17_studio_open_rental.sql` – rodzaj ogłoszenia, open training i wynajem
+- `supabase/sql/18_makers.sql` – producenci sprzętu i strojów (tylko producenci, bez dystrybucji)
 - `supabase/sql/15_cleanup_cron.sql` – codzienne sprzątanie starych wiadomości i ogłoszeń (pg_cron)
 - `supabase/functions/aerial-notify/` – maile: wiadomości do autorów ogłoszeń, kolejka moderacji
 - `supabase/email-templates/` – wspólne maile logowania dla Aerial Events i tej strony (wklejane ręcznie w Supabase)
@@ -35,6 +37,8 @@ W budowie. Strona ma `noindex`, a `robots.txt` blokuje wyszukiwarki. Oba trzeba 
 | `/studios/add/`, `/studios/edit/<id>` | formularz studia |
 | `/board/`, `/board/<tytul>-<8 znaków id>` | tablica i ogłoszenie |
 | `/board/add/`, `/board/edit/<id>` | formularz ogłoszenia |
+| `/makers/`, `/makers/<nazwa-miasto>` | producenci i profil producenta |
+| `/makers/add/`, `/makers/edit/<id>` | formularz producenta |
 | `/account/` | moje wpisy i moderacja |
 
 Nazwy ścieżek są po angielsku i wspólne dla wszystkich wersji językowych (język wybiera się
@@ -59,7 +63,7 @@ Supabase → Authentication → URL Configuration → Redirect URLs.
 ## Maile (funkcja aerial-notify)
 
 Osobna funkcja od `notify` z Aerial Events, korzysta z tych samych sekretów
-(`RESEND_API_KEY`, `WEBHOOK_SECRET`). Wywołują ją trzy Database Webhooki
+(`RESEND_API_KEY`, `WEBHOOK_SECRET`). Wywołują ją cztery Database Webhooki
 (HTTP POST, nagłówek `x-webhook-secret`):
 
 | Tabela | Zdarzenia | Co wysyła |
@@ -67,6 +71,7 @@ Osobna funkcja od `notify` z Aerial Events, korzysta z tych samych sekretów
 | `listing_messages` | Insert | wiadomość do autora ogłoszenia, reply-to nadawcy |
 | `listings` | Insert, Update | nowe/poprawione do adminów, zatwierdzone/odrzucone do autora |
 | `studios` | Insert, Update | nowe/poprawione studio do adminów |
+| `makers` | Insert, Update | nowy/poprawiony producent do adminów |
 
 ## Wdrożenie
 

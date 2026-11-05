@@ -18,8 +18,8 @@ RedirectMatch 301 ^/ogloszenia/edytuj/(.+)$ /board/edit/$1
 RedirectMatch 301 ^/ogloszenia(/.*)?$ /board$1
 RedirectMatch 301 ^/moje(/.*)?$ /account/
 
-# Ładne adresy: /studios/…, /board/… i /account/ obsługuje ta sama strona (index.html),
+# Ładne adresy: /studios/…, /board/…, /makers/… i /account/ obsługuje ta sama strona (index.html),
 # która czyta adres i pokazuje właściwy widok. /calendar/ to prawdziwy folder.
 # Nazwy ścieżek są po angielsku i wspólne dla wszystkich wersji językowych.
 RewriteEngine On
-RewriteRule ^(studios|board|account)(/.*)?$ /index.html [L]
+RewriteRule ^(studios|board|makers|account)(/.*)?$ /index.html [L]

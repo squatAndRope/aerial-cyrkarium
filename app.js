@@ -5,7 +5,7 @@
      2. Baza (Supabase), logowanie, wczytywanie danych
      3. Nawigacja (prawdziwe adresy: /, /studios/…, /board/…, /account/)
      4. Studia: filtry, mapa, lista, profil
-     5. Wiersz wydarzenia (profil studia) i strona główna
+     5. Wiersz wydarzenia (profil studia) i strona główna; 5b ogłoszenia; 5c producenci
      6. Formularz studia
      7. Moje studia i moderacja
      8. Start
@@ -47,6 +47,8 @@
   const slugify = (x) => cityKey(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70);
   const studioSlug = (st) => slugify(st.name + " " + st.city) || String(st.id);
   const studioPath = (st) => `/studios/${studioSlug(st)}`;
+  const makerPath = (m) => `/makers/${slugify(m.name + " " + m.city) || m.id}`;
+  const findMaker = (key) => state.makers.find((x) => slugify(x.name + " " + x.city) === key) || state.makers.find((x) => String(x.id) === key);
   const listingPath = (l) => `/board/${slugify(l.title).slice(0, 60)}-${String(l.id).slice(0, 8)}`;
   // szukanie po ładnym adresie albo po samym id (stare linki z # i linki z maili)
   const findStudio = (key) => state.studios.find((x) => studioSlug(x) === key) || state.studios.find((x) => String(x.id) === key);
@@ -90,7 +92,16 @@
     stats: {},          // liczba wiadomości przy moich ogłoszeniach
     lfilter: { cat: "all", kind: "all", q: "" },
     listingsLoaded: false,
+    makers: [],         // producenci, które baza pozwala przeczytać tej osobie
+    makersLoaded: false,
+    mfilter: { prod: "all", q: "", custom: false, abroad: false },
   };
+
+  const DEMO_MAKERS = [
+    { id: "m1", name: "Szarfownia (przykład)", city: "Łódź", products: ["silks"], custom_orders: true, ships_abroad: true, verified: true, description: "Szarfy z poliamidu o niskiej rozciągliwości, 20 kolorów, długość na zamówienie.", website_url: "https://example.com", shop_url: "https://example.com/sklep", status: "approved" },
+    { id: "m2", name: "Kołodziej Aerial (przykład)", city: "Poznań", products: ["hoops", "frames", "rigging"], custom_orders: true, ships_abroad: false, verified: false, description: "Koła stalowe i aluminiowe na wymiar, ramy wolnostojące.", instagram_url: "https://instagram.com/", status: "approved" },
+    { id: "m3", name: "Cekin Studio (przykład)", city: "Warszawa", products: ["costumes", "accessories"], custom_orders: true, ships_abroad: true, verified: true, description: "Kostiumy startowe i pokazowe szyte na miarę, ochraniacze na nadgarstki.", website_url: "https://example.com", status: "approved" },
+  ];
 
   const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString();
   const DEMO_LISTINGS = [
@@ -112,7 +123,7 @@
   ];
 
   async function initDb() {
-    if (DEMO) { state.studios = DEMO_STUDIOS; state.loaded = true; state.listings = DEMO_LISTINGS; state.listingsLoaded = true; return; }
+    if (DEMO) { state.studios = DEMO_STUDIOS; state.loaded = true; state.listings = DEMO_LISTINGS; state.listingsLoaded = true; state.makers = DEMO_MAKERS; state.makersLoaded = true; return; }
     state.sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
@@ -120,7 +131,7 @@
     await setUser(data.session?.user || null);
     state.sb.auth.onAuthStateChange((_e, session) => {
       const u = session?.user || null;
-      if ((u?.id || null) !== (state.user?.id || null)) setUser(u).then(() => Promise.all([loadStudios(), loadListings()]).then(route));
+      if ((u?.id || null) !== (state.user?.id || null)) setUser(u).then(() => Promise.all([loadStudios(), loadListings(), loadMakers()]).then(route));
     });
   }
 
@@ -154,6 +165,14 @@
       const { data: st } = await state.sb.rpc("my_listing_stats");
       (st || []).forEach((r) => { state.stats[r.listing_id] = r.messages; });
     }
+  }
+
+  async function loadMakers() {
+    if (DEMO) return;
+    const { data, error } = await state.sb.from("makers").select("*").order("name");
+    state.makersLoaded = true;
+    if (error) { console.warn("makers:", error.message); state.makers = []; return; }
+    state.makers = data || [];
   }
 
   async function loadEvents() {
@@ -203,7 +222,7 @@
   // ---------------- 3. Nawigacja ----------------
   // Jedna strona obsługuje wszystkie adresy (reguła w .htaccess kieruje /studios/…, /board/…
   // i /account/ do index.html). Stare polskie ścieżki (/studia/…) przekierowuje .htaccess. Linki wewnątrz przechodzą bez przeładowania (history.pushState).
-  const VIEWS = ["home", "studia", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "moje"];
+  const VIEWS = ["home", "studia", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "makers", "maker", "dodaj-producenta", "moje"];
   const keep = DEMO ? "?demo=1" : "";
 
   function go(path, replace = false) {
@@ -244,12 +263,17 @@
       else if (parts[1] === "edit") { view = "dodaj-ogloszenie"; id = parts[2] || null; }
       else if (parts[1]) { view = "ogloszenie"; id = parts[1]; }
       else view = "ogloszenia";
+    } else if (parts[0] === "makers") {
+      if (parts[1] === "add") view = "dodaj-producenta";
+      else if (parts[1] === "edit") { view = "dodaj-producenta"; id = parts[2] || null; }
+      else if (parts[1]) { view = "maker"; id = parts[1]; }
+      else view = "makers";
     } else if (parts[0] === "account") view = "moje";
 
     VIEWS.forEach((v) => { $("view-" + v).hidden = v !== view; });
-    const tab = view.includes("ogloszeni") ? "board" : view.includes("studi") ? "studios" : "";
+    const tab = view.includes("ogloszeni") ? "board" : view.includes("studi") ? "studios" : view.includes("produc") || view.startsWith("maker") ? "makers" : "";
     document.querySelectorAll(".sections a").forEach((a) => a.setAttribute("aria-selected", String(a.dataset.view === tab)));
-    const titles = { home: t().brand, studia: t().tabStudios, ogloszenia: t().tabBoard, ogloszenie: t().tabBoard, "dodaj-ogloszenie": t().addListing.replace("+ ", ""), "dodaj-studio": t().addStudio.replace("+ ", ""), moje: t().mine };
+    const titles = { home: t().brand, studia: t().tabStudios, ogloszenia: t().tabBoard, ogloszenie: t().tabBoard, "dodaj-ogloszenie": t().addListing.replace("+ ", ""), "dodaj-studio": t().addStudio.replace("+ ", ""), makers: t().tabMakers, maker: t().tabMakers, "dodaj-producenta": t().addMaker.replace("+ ", ""), moje: t().mine };
     let title = titles[view];
 
     if (view === "home") renderHome();
@@ -267,6 +291,13 @@
     }
     else if (view === "dodaj-ogloszenie") renderListingForm(id);
     else if (view === "dodaj-studio") renderForm(id);
+    else if (view === "makers") renderMakers();
+    else if (view === "maker") {
+      const m = state.makersLoaded ? findMaker(id) : null;
+      if (m) { title = m.name; if (location.pathname !== makerPath(m)) history.replaceState(null, "", makerPath(m) + keep); }
+      renderMaker(m);
+    }
+    else if (view === "dodaj-producenta") renderMakerForm(id);
     else if (view === "moje") renderMine();
     document.title = view === "home" ? `${t().brand} · Fundacja Cyrkarium` : `${title} · ${t().brand}`;
   }
@@ -416,6 +447,7 @@
     set("n-events", state.events.length, state.loaded);
     set("n-studios", publicStudios().length, state.loaded);
     set("n-listings", state.listings.filter(isLive).length, state.listingsLoaded);
+    set("n-makers", state.makers.filter((m) => m.status === "approved").length, state.makersLoaded);
   }
 
   // ---------------- 5b. Ogłoszenia ----------------
@@ -573,6 +605,133 @@
     });
   }
 
+  // ---------------- 5c. Producenci ----------------
+  const makerTags = (m) => (m.products || []).map((p) => `<span class="tag">${esc(t().products[p] || p)}</span>`).join("")
+    + (m.custom_orders ? `<span class="tag tag-extra">${esc(t().customTag)}</span>` : "")
+    + (m.ships_abroad ? `<span class="tag tag-extra">${esc(t().abroadTag)}</span>` : "");
+
+  function renderMakers() {
+    const F = state.mfilter;
+    $("prod-chips").innerHTML = [["all", t().all], ...Object.entries(t().products)]
+      .map(([k, v]) => `<button type="button" class="chip" data-prod="${k}" aria-pressed="${F.prod === k}">${esc(v)}</button>`).join("");
+    $("m-custom").checked = F.custom; $("m-abroad").checked = F.abroad;
+    const all = state.makers.filter((m) => m.status === "approved");
+    $("makers-count").textContent = t().makersCount(all.length);
+    const q = cityKey(F.q);
+    const list = all.filter((m) => (F.prod === "all" || (m.products || []).includes(F.prod))
+      && (!F.custom || m.custom_orders) && (!F.abroad || m.ships_abroad)
+      && (!q || cityKey(m.name + " " + m.city + " " + (m.description || "")).includes(q)));
+    const box = $("maker-grid");
+    if (!state.makersLoaded) { box.innerHTML = ""; return; }
+    if (!all.length) { box.innerHTML = `<div class="empty"><p>${esc(t().makersEmpty)}</p><a class="btn primary" href="/makers/add/">${esc(t().addMaker)}</a></div>`; return; }
+    if (!list.length) { box.innerHTML = `<div class="empty"><p>${esc(t().makersNoMatch)}</p></div>`; return; }
+    box.innerHTML = list.map((m) => `<a class="card maker-card" href="${esc(makerPath(m))}">
+      <div class="card-top"><span>${esc(m.city)}</span>${m.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</div>
+      <h3>${esc(m.name)}</h3>
+      ${m.description ? `<p>${esc(m.description)}</p>` : ""}
+      <span class="tags">${makerTags(m)}</span>
+    </a>`).join("");
+  }
+
+  function renderMaker(m) {
+    const box = $("maker-box");
+    const back = `<a class="back" href="/makers/">${esc(t().backToMakers)}</a>`;
+    if (!state.makersLoaded) { box.innerHTML = back; return; }
+    if (!m) { box.innerHTML = `<div class="view">${back}<p class="msg warn">${esc(t().makerGone)}</p></div>`; return; }
+    const links = [["shop_url", t().shop, "primary"], ["website_url", t().website, m.shop_url ? "ghost" : "primary"], ["instagram_url", t().instagram, "ghost"], ["facebook_url", t().facebook, "ghost"]]
+      .filter(([k]) => safeUrl(m[k]))
+      .map(([k, label, kind]) => `<a class="btn ${kind}" href="${esc(safeUrl(m[k]))}" target="_blank" rel="noopener nofollow">${esc(label)} ↗</a>`).join("");
+    box.innerHTML = `<div class="view">${back}<section class="profile">
+      <div>
+        <div class="profile-top">
+          ${m.verified ? `<span class="badge ok">${esc(t().makerVerified)}</span>` : `<span class="badge warn">${esc(t().community)}</span>`}
+          ${m.status !== "approved" ? `<span class="badge bad">${esc(t().status[m.status])}</span>` : ""}
+          <span class="small">${esc(m.city)}</span>
+        </div>
+        <h2>${esc(m.name)}</h2>
+        ${m.description ? `<p>${esc(m.description)}</p>` : ""}
+        <div class="tags">${makerTags(m)}</div>
+        ${links ? `<div class="links">${links}</div>` : ""}
+        <p class="small">${esc(t().makerNoContact)}</p>
+        ${state.isAdmin && m.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-kverify="${esc(m.id)}">${esc(m.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a></div>` : ""}
+      </div>
+      <div>
+        ${m.verified ? "" : `<div class="empty"><strong>${esc(t().makerClaimTitle)}</strong><p class="small">${esc(t().makerClaimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
+      </div>
+    </section></div>`;
+  }
+
+  function renderMakerForm(id) {
+    const box = $("maker-form-box");
+    box.innerHTML = "";
+    if (!DEMO && !state.user) { box.appendChild(loginPanel(t().mLoginTitle)); return; }
+    const m = id ? state.makers.find((x) => String(x.id) === String(id)) : null;
+    const v = m || { products: [] };
+    box.innerHTML = `<form class="panel" id="maker-form" novalidate>
+      <h2>${esc(m ? t().mFormEdit : t().mFormNew)}</h2>
+      <p class="muted" style="margin:0">${esc(t().mFormLede)}</p>
+      <div class="row2">
+        <div class="field"><label class="req" for="k-name">${esc(t().mfName)}</label><input id="k-name" maxlength="100" value="${esc(v.name)}"></div>
+        <div class="field"><label class="req" for="k-city">${esc(t().fCity)}</label><input id="k-city" maxlength="60" value="${esc(v.city)}"></div>
+      </div>
+      <div class="field"><span class="label req">${esc(t().mfProducts)}</span><div class="checks">${Object.entries(t().products).map(([k, l]) => `<label><input type="checkbox" name="prod" value="${k}"${(v.products || []).includes(k) ? " checked" : ""}> ${esc(l)}</label>`).join("")}</div></div>
+      <div class="field"><span class="label">${esc(t().mfExtras)}</span>
+        <label class="toggle"><input type="checkbox" id="k-custom"${v.custom_orders ? " checked" : ""}> <span>${esc(t().mfCustom)}</span></label>
+        <label class="toggle"><input type="checkbox" id="k-abroad"${v.ships_abroad ? " checked" : ""}> <span>${esc(t().mfAbroad)}</span></label>
+      </div>
+      <div class="field"><label for="k-desc">${esc(t().fDesc)}</label><textarea id="k-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().mfDescHint)}</p></div>
+      <div id="k-alert"></div>
+      <div class="row2">
+        <div class="field"><label for="k-web">${esc(t().fWebsite)}</label><input id="k-web" type="url" inputmode="url" placeholder="https://" value="${esc(v.website_url)}"></div>
+        <div class="field"><label for="k-shop">${esc(t().mfShop)}</label><input id="k-shop" type="url" inputmode="url" placeholder="https://" value="${esc(v.shop_url)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="k-ig">${esc(t().fInstagram)}</label><input id="k-ig" type="url" inputmode="url" placeholder="https://instagram.com/…" value="${esc(v.instagram_url)}"></div>
+        <div class="field"><label for="k-fb">${esc(t().fFacebook)}</label><input id="k-fb" type="url" inputmode="url" placeholder="https://facebook.com/…" value="${esc(v.facebook_url)}"></div>
+      </div>
+      <p class="hint req" style="margin:0">${esc(t().fLinksHint)}</p>
+      <label class="toggle"><input type="checkbox" id="k-consent"${m ? " checked" : ""}> <span class="small req">${esc(t().fConsent)}</span></label>
+      <div id="k-msg"></div>
+      <div class="form-actions"><button type="submit" class="btn primary" id="k-submit">${esc(t().submit)}</button><a class="btn ghost" href="${m ? "/account/" : "/makers/"}">${esc(t().cancel)}</a></div>
+    </form>`;
+
+    const desc = $("k-desc");
+    const checkDesc = () => {
+      const found = contactInText(desc.value);
+      desc.classList.toggle("err", found.length > 0);
+      $("k-alert").innerHTML = found.length ? `<p class="msg bad" role="alert">${esc(t().errContact(found.join(t().and)))}</p>` : "";
+      return found.length === 0;
+    };
+    desc.addEventListener("input", checkDesc);
+
+    $("maker-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = $("k-msg");
+      const fail = (text) => { msg.innerHTML = `<p class="msg bad" role="alert">${esc(text)}</p>`; };
+      const val = (id) => $(id).value.trim();
+      const row = {
+        name: val("k-name"), city: val("k-city"),
+        products: [...document.querySelectorAll('input[name="prod"]:checked')].map((i) => i.value),
+        custom_orders: $("k-custom").checked, ships_abroad: $("k-abroad").checked,
+        description: val("k-desc") || null,
+        website_url: val("k-web") || null, shop_url: val("k-shop") || null, instagram_url: val("k-ig") || null, facebook_url: val("k-fb") || null,
+      };
+      const urls = [row.website_url, row.shop_url, row.instagram_url, row.facebook_url].filter(Boolean);
+      if (row.name.length < 2 || row.city.length < 2 || !row.products.length || !urls.length) return fail(t().mfErrRequired);
+      if (urls.some((u) => !/^https:\/\/[^\s.]+\.[^\s]+$/i.test(u))) return fail(t().errUrl);
+      if (!checkDesc()) return fail(t().errContact(contactInText(row.description).join(t().and)));
+      if (!$("k-consent").checked) return fail(t().errConsent);
+      if (DEMO) { msg.innerHTML = `<p class="msg ok">${esc(t().mSaved)} (demo)</p>`; return; }
+      const btn = $("k-submit"); btn.disabled = true; btn.textContent = t().saving;
+      const { error } = m ? await state.sb.from("makers").update(row).eq("id", m.id) : await state.sb.from("makers").insert(row);
+      btn.disabled = false; btn.textContent = t().submit;
+      if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : t().errSave); }
+      await loadMakers();
+      go("/account/");
+      notice(t().mSaved);
+    });
+  }
+
   // ---------------- 6. Formularz studia ----------------
   const NOMINATIM = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&accept-language=pl&q=";
   async function geocode(q) {
@@ -720,18 +879,49 @@
     const me = state.user.id;
     const myStudios = state.studios.filter((s) => s.created_by === me);
     const myListings = state.listings.filter((l) => l.created_by === me);
+    const myMakers = state.makers.filter((m) => m.created_by === me);
     const h2 = (txt) => `<h2 style="font-size:20px;font-weight:400;margin-top:12px">${esc(txt)}</h2>`;
     let html = `<div class="mine"><div class="lead"><h1>${esc(t().mineTitle)}</h1>
-      <span class="form-actions"><a class="btn primary" href="/board/add/">${esc(t().addListing)}</a><a class="btn ghost" href="/studios/add/">${esc(t().addStudio)}</a></span></div>`;
+      <span class="form-actions"><a class="btn primary" href="/board/add/">${esc(t().addListing)}</a><a class="btn ghost" href="/studios/add/">${esc(t().addStudio)}</a><a class="btn ghost" href="/makers/add/">${esc(t().addMaker)}</a></span></div>`;
     html += h2(t().mineListings) + (myListings.length ? myListings.map((l) => listingRow(l, false)).join("") : `<p class="muted">${esc(t().mineListingsEmpty)}</p>`);
     html += h2(t().mineStudios) + (myStudios.length ? myStudios.map((s) => mineRow(s, false)).join("") : `<p class="muted">${esc(t().mineEmpty)}</p>`);
+    html += h2(t().mineMakers) + (myMakers.length ? myMakers.map((m) => makerRow(m, false)).join("") : `<p class="muted">${esc(t().mineMakersEmpty)}</p>`);
     if (state.isAdmin) {
       const pl = state.listings.filter((l) => l.status === "pending");
       const ps = state.studios.filter((s) => s.status === "pending");
       html += h2(t().modListings) + (pl.length ? pl.map((l) => listingRow(l, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
       html += h2(t().modStudios) + (ps.length ? ps.map((s) => mineRow(s, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
+      const pm = state.makers.filter((m) => m.status === "pending");
+      html += h2(t().modMakers) + (pm.length ? pm.map((m) => makerRow(m, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
     }
     box.innerHTML = html + "</div>";
+  }
+
+  function makerRow(m, admin) {
+    const st = m.status;
+    const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
+    return `<div class="mine-row">
+      <div class="mine-head"><strong>${esc(m.name)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      <span class="small">${esc(m.city)} · ${(m.products || []).map((p) => esc(t().products[p] || p)).join(", ")}</span>
+      ${m.description ? `<span class="small">${esc(m.description)}</span>` : ""}
+      ${[m.website_url, m.shop_url, m.instagram_url, m.facebook_url].filter(safeUrl).map((u) => `<a class="small" href="${esc(u)}" target="_blank" rel="noopener nofollow">${esc(u)}</a>`).join("")}
+      ${st === "rejected" && m.rejection_reason ? `<p class="msg bad">${esc(m.rejection_reason)}</p>` : ""}
+      <div class="form-actions">
+        ${admin ? `<button type="button" class="btn ok" data-kapprove="${esc(m.id)}">${esc(t().approve)}</button>
+          <span class="reason" style="flex:1 1 220px"><textarea id="kreason-${esc(m.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
+          <button type="button" class="btn bad" data-kreject="${esc(m.id)}">${esc(t().reject)}</button>`
+        : `${st === "approved" ? `<a class="btn ghost" href="${esc(makerPath(m))}">${esc(t().show)}</a>` : ""}
+          <a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a>
+          <button type="button" class="btn bad" data-kremove="${esc(m.id)}">${esc(t().remove)}</button>`}
+      </div>
+    </div>`;
+  }
+
+  async function updateMaker(id, patch) {
+    const { error } = await state.sb.from("makers").update(patch).eq("id", id);
+    if (error) { notice(t().errSave, "bad"); console.warn(error); return; }
+    await loadMakers();
+    route();
   }
 
   async function updateListing(id, patch) {
@@ -759,6 +949,16 @@
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
     else if (d.approve) updateStudio(d.approve, { status: "approved" });
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
+    else if (d.prod) { state.mfilter.prod = d.prod; renderMakers(); }
+    else if (d.kverify) { const m = state.makers.find((x) => String(x.id) === d.kverify); if (m) updateMaker(m.id, { verified: !m.verified }); }
+    else if (d.kapprove) updateMaker(d.kapprove, { status: "approved" });
+    else if (d.kreject) updateMaker(d.kreject, { status: "rejected", rejection_reason: ($("kreason-" + d.kreject)?.value || "").trim() || null });
+    else if (d.kremove) {
+      if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const { error } = await state.sb.from("makers").delete().eq("id", d.kremove);
+      if (error) { notice(t().errSave, "bad"); return; }
+      await loadMakers(); renderMine();
+    }
     else if (d.lcat) { state.lfilter.cat = d.lcat; state.lfilter.kind = "all"; renderBoard(); }
     else if (d.lkind) { state.lfilter.kind = d.lkind; renderBoard(); }
     else if (d.lapprove) updateListing(d.lapprove, { status: "approved" });
@@ -786,6 +986,9 @@
   $("f-open").addEventListener("change", (e) => { state.filter.open = e.target.checked; renderStudios(); });
   $("f-rental").addEventListener("change", (e) => { state.filter.rental = e.target.checked; renderStudios(); });
   $("l-q").addEventListener("input", (e) => { state.lfilter.q = e.target.value; renderBoard(); });
+  $("m-q").addEventListener("input", (e) => { state.mfilter.q = e.target.value; renderMakers(); });
+  $("m-custom").addEventListener("change", (e) => { state.mfilter.custom = e.target.checked; renderMakers(); });
+  $("m-abroad").addEventListener("change", (e) => { state.mfilter.abroad = e.target.checked; renderMakers(); });
   $("foot-events").href = CFG.eventsUrl;
   const setPrivacyHref = () => { $("foot-privacy").href = privacyHref(); };
   setPrivacyHref();
@@ -794,7 +997,7 @@
     const a = e.target.closest("a[href]");
     if (!a || a.target || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const url = new URL(a.href, location.href);
-    if (url.origin !== location.origin || !/^\/(studios|board|account)?(\/|$)/.test(url.pathname) || url.hash) return;
+    if (url.origin !== location.origin || !/^\/(studios|board|makers|account)?(\/|$)/.test(url.pathname) || url.hash) return;
     e.preventDefault();
     go(url.pathname);
   });
@@ -806,7 +1009,7 @@
   route();
   (async () => {
     try { await initDb(); } catch (err) { console.warn(err); }
-    await Promise.all([loadStudios(), loadEvents(), loadListings()]);
+    await Promise.all([loadStudios(), loadEvents(), loadListings(), loadMakers()]);
     route();
   })();
 })();

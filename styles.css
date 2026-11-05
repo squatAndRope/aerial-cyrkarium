@@ -291,3 +291,16 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 
 /* ---------- 14. Open training i wynajem ---------- */
 .tag-extra { background: var(--ok-soft); color: var(--ok); }
+
+/* ---------- 15. Producenci ---------- */
+.dot-mak { background: #EE9FCB; }
+.t-mak { background: var(--lilac); color: #2A1F40; }
+.t-mak .tile-cta { color: var(--violet); }
+.trio { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 960px) { .trio { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .trio { grid-template-columns: 1fr; } }
+.mak .chip[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #FFFFFF; }
+@media (prefers-color-scheme: dark) { .mak .chip[aria-pressed="true"] { background: var(--lilac); border-color: var(--lilac); color: #2A1F40; } }
+.maker-card { cursor: pointer; text-decoration: none; color: inherit; }
+.maker-card:hover { border-color: var(--accent); }
+.maker-card p { -webkit-line-clamp: 2; }

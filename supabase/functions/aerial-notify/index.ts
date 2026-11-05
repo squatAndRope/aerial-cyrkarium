@@ -9,6 +9,7 @@
 //   • listings INSERT/UPDATE  → nowe / poprawione ogłoszenie do adminów,
 //                               zatwierdzone / odrzucone do autora
 //   • studios INSERT/UPDATE   → nowe / poprawione studio do adminów
+//   • makers INSERT/UPDATE    → nowy / poprawiony producent do adminów
 //
 // Sekrety (Edge Functions → Secrets), te same co dla „notify”:
 //   RESEND_API_KEY, WEBHOOK_SECRET
@@ -130,8 +131,19 @@ export function adminStudioMail(s: Row, edited: boolean, admins: string[]): Mail
   };
 }
 
+export function adminMakerMail(m: Row, edited: boolean, admins: string[]): Mail {
+  const lead = edited ? "Autor poprawił producenta, więc wrócił do kolejki." : "Nowy producent czeka na sprawdzenie.";
+  const links = [m.website_url, m.shop_url, m.instagram_url, m.facebook_url].filter(Boolean).join("\n");
+  return {
+    to: admins,
+    subject: `${edited ? "Poprawiony" : "Nowy"} producent: ${m.name} (${m.city})`,
+    html: layout(p(lead) + quote(`${m.name}\n${m.city}\n${(m.products ?? []).join(", ")}\n\n${m.description ?? ""}\n\n${links}`) + button(`${SITE}/account/`, "Otwórz kolejkę")),
+    text: `${lead}\n\n${m.name}, ${m.city}\n${links}\n\n${SITE}/account/`,
+  };
+}
+
 // --- kto dostaje maila (czysta funkcja) ---------------------------------
-export type Kind = "message" | "admin_listing_new" | "admin_listing_edited" | "author_listing" | "admin_studio_new" | "admin_studio_edited";
+export type Kind = "message" | "admin_listing_new" | "admin_listing_edited" | "author_listing" | "admin_studio_new" | "admin_studio_edited" | "admin_maker_new" | "admin_maker_edited";
 export function decide(pl: Payload): Kind | null {
   if (pl.schema !== "public" || !pl.record) return null;
   const r = pl.record, o = pl.old_record;
@@ -146,6 +158,10 @@ export function decide(pl: Payload): Kind | null {
   if (pl.table === "studios") {
     if (pl.type === "INSERT") return r.status === "pending" ? "admin_studio_new" : null;
     if (pl.type === "UPDATE" && o && o.status !== "pending" && r.status === "pending") return "admin_studio_edited";
+  }
+  if (pl.table === "makers") {
+    if (pl.type === "INSERT") return r.status === "pending" ? "admin_maker_new" : null;
+    if (pl.type === "UPDATE" && o && o.status !== "pending" && r.status === "pending") return "admin_maker_edited";
   }
   return null;
 }
@@ -181,6 +197,8 @@ Deno.serve(async (req) => {
   } else if (kind === "author_listing") {
     const to = await emailOf(r.created_by);
     if (to) mail = authorListingMail(r, to);
+  } else if (kind === "admin_maker_new" || kind === "admin_maker_edited") {
+    mail = adminMakerMail(r, kind === "admin_maker_edited", await admins());
   } else {
     mail = adminStudioMail(r, kind === "admin_studio_edited", await admins());
   }

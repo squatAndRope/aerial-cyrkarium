@@ -463,6 +463,7 @@ legend { font-family: var(--font-display); font-weight: 700; font-size: 17px; ma
 .dot-cal { background: var(--lilac); }
 .dot-map { background: #6B3F69; box-shadow: 0 0 0 2px var(--lime); }
 .dot-mkt { background: var(--lime); }
+.dot-mak { background: #EE9FCB; }
 @media (max-width: 560px) { .sections a { padding: 10px 12px; font-size: 13px; } }
 
 /* ---------- 14. Wstęp kalendarza pod zakładkami ----------
