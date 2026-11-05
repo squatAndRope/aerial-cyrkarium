@@ -127,6 +127,15 @@ window.AC_TEXTS = {
     saved: "Dziękujemy! Studio czeka na sprawdzenie. Zobaczysz je w „Moich studiach”.",
 
     // moje i moderacja
+    // zakładki w „Moich wpisach”
+    tabReview: "Do sprawdzenia",
+    tabPublished: "Opublikowane",
+    reviewHint: "Wszystkie zgłoszenia razem, od najnowszego. „Popraw” otwiera formularz, w którym możesz poprawić wpis przed zatwierdzeniem.",
+    typeListing: "Ogłoszenie",
+    typeStudio: "Studio",
+    typeMaker: "Producent",
+    sentAt: (d) => `Zgłoszone ${d}`,
+    editedAt: (d) => `poprawione ${d}`,
     mineTitle: "Moje wpisy",
     mineStudios: "Studia",
     mineListings: "Ogłoszenia",
@@ -366,6 +375,14 @@ window.AC_TEXTS = {
     errSave: "Couldn't save. Please try again.",
     saved: "Thank you! The studio is waiting for review. You'll see it under “My studios”.",
 
+    tabReview: "To review",
+    tabPublished: "Published",
+    reviewHint: "All submissions together, newest first. “Edit” opens the form so you can fix an entry before approving it.",
+    typeListing: "Listing",
+    typeStudio: "Studio",
+    typeMaker: "Maker",
+    sentAt: (d) => `Submitted ${d}`,
+    editedAt: (d) => `edited ${d}`,
     mineTitle: "My posts",
     mineStudios: "Studios",
     mineListings: "Listings",

@@ -304,3 +304,13 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .maker-card { cursor: pointer; text-decoration: none; color: inherit; }
 .maker-card:hover { border-color: var(--accent); }
 .maker-card p { -webkit-line-clamp: 2; }
+
+/* ---------- 16. Moje wpisy: zakładki, daty zgłoszeń ---------- */
+.mine-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.mine-tabs::-webkit-scrollbar { display: none; }
+.mine-tabs button { padding: 10px 12px; font-weight: 700; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.mine-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.count { font-size: 12px; background: var(--tag-bg); color: var(--tag-ink); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
+.count.hot { background: var(--bad); color: var(--surface); }
+.stamp { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.type-badge { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; border-radius: 6px; padding: 2px 7px; background: var(--tag-bg); color: var(--accent); }

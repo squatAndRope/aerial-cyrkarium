@@ -95,6 +95,7 @@
     makers: [],         // producenci, które baza pozwala przeczytać tej osobie
     makersLoaded: false,
     mfilter: { prod: "all", q: "", custom: false, abroad: false },
+    mineTab: null,      // zakładka w „Moich wpisach”
   };
 
   const DEMO_MAKERS = [
@@ -123,7 +124,19 @@
   ];
 
   async function initDb() {
-    if (DEMO) { state.studios = DEMO_STUDIOS; state.loaded = true; state.listings = DEMO_LISTINGS; state.listingsLoaded = true; state.makers = DEMO_MAKERS; state.makersLoaded = true; return; }
+    if (DEMO) {
+      // podgląd „Moich wpisów”: udajemy zalogowaną adminkę z kilkoma zgłoszeniami w kolejce
+      const ago = (h) => new Date(Date.now() - h * 3600000).toISOString();
+      state.user = { id: "demo", email: "demo@example.com" }; state.isAdmin = true;
+      state.studios = [...DEMO_STUDIOS.map((x, i) => ({ ...x, created_at: ago(200 + i * 30), updated_at: ago(200 + i * 30) })),
+        { id: "d9", name: "Nowe Studio (przykład zgłoszenia)", city: "Toruń", lat: 53.01, lng: 18.6, disciplines: ["silks"], levels: [], status: "pending", created_by: "u2", created_at: ago(5), updated_at: ago(5), website_url: "https://example.com" }];
+      state.listings = [...DEMO_LISTINGS.map((x) => ({ ...x, created_by: x.id === "l1" ? "demo" : "u3", updated_at: x.created_at })),
+        { id: "l9", category: "gear", kind: "sell", title: "Sprzedam koło 85 cm (przykład zgłoszenia)", description: "Stalowe, z taśmą, mało używane.", city: "Gdynia", nick: "Ola", price: "300 zł", status: "pending", created_by: "u4", created_at: ago(26), updated_at: ago(2), expires_at: inDays(60) }];
+      state.makers = [...DEMO_MAKERS.map((x, i) => ({ ...x, created_at: ago(300 + i), updated_at: ago(300 + i) })),
+        { id: "m9", name: "Szyjemy Stroje (przykład zgłoszenia)", city: "Kraków", products: ["costumes"], status: "pending", created_by: "u5", created_at: ago(50), updated_at: ago(50), instagram_url: "https://instagram.com/" }];
+      state.loaded = state.listingsLoaded = state.makersLoaded = true;
+      return;
+    }
     state.sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
@@ -835,6 +848,7 @@
     const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
     return `<div class="mine-row">
       <div class="mine-head"><strong>${esc(s.name)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      ${stamp(s, admin && t().typeStudio)}
       <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""} · ${(s.disciplines || []).map((d) => esc(t().disciplines[d] || d)).join(", ")}</span>
       ${s.description ? `<span class="small">${esc(s.description)}</span>` : ""}
       ${[s.website_url, s.instagram_url, s.facebook_url].filter(safeUrl).map((u) => `<a class="small" href="${esc(u)}" target="_blank" rel="noopener nofollow">${esc(u)}</a>`).join("")}
@@ -842,7 +856,8 @@
       <div class="form-actions">
         ${admin ? `<button type="button" class="btn ok" data-approve="${esc(s.id)}">${esc(t().approve)}</button>
           <span class="reason" style="flex:1 1 220px"><textarea id="reason-${esc(s.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
-          <button type="button" class="btn bad" data-reject="${esc(s.id)}">${esc(t().reject)}</button>`
+          <button type="button" class="btn bad" data-reject="${esc(s.id)}">${esc(t().reject)}</button>
+          <a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>`
         : `${st === "approved" ? `<a class="btn ghost" href="${esc(studioPath(s))}">${esc(t().showOnMap)}</a>` : ""}
           <a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>
           <button type="button" class="btn bad" data-remove="${esc(s.id)}">${esc(t().remove)}</button>`}
@@ -856,6 +871,7 @@
     const n = state.stats[l.id] || 0;
     return `<div class="mine-row">
       <div class="mine-head"><strong>${esc(l.title)}</strong><span class="badge ${kind}">${esc(t().lStatus[st])}</span></div>
+      ${stamp(l, admin && t().typeListing)}
       <span class="small">${esc(t().cats[l.category] || l.category)} · ${esc(kindLabel(l))} · ${esc(l.nick)} · ${esc(l.city)}${l.price ? " · " + esc(l.price) : ""}${st === "approved" ? " · " + esc(t().expiresIn(daysBetween(new Date(), new Date(l.expires_at)) + 1)) : ""}</span>
       <span class="small">${esc(l.description)}</span>
       ${!admin ? `<span class="small"><strong>${esc(t().lMessages(n))}</strong></span>` : ""}
@@ -863,7 +879,8 @@
       <div class="form-actions">
         ${admin ? `<button type="button" class="btn ok" data-lapprove="${esc(l.id)}">${esc(t().approve)}</button>
           <span class="reason" style="flex:1 1 220px"><textarea id="lreason-${esc(l.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
-          <button type="button" class="btn bad" data-lreject="${esc(l.id)}">${esc(t().reject)}</button>`
+          <button type="button" class="btn bad" data-lreject="${esc(l.id)}">${esc(t().reject)}</button>
+          <a class="btn ghost" href="/board/edit/${esc(l.id)}">${esc(t().edit)}</a>`
         : `${st === "approved" ? `<a class="btn ghost" href="${esc(listingPath(l))}">${esc(t().show)}</a><button type="button" class="btn ghost" data-lclose="${esc(l.id)}">${esc(t().close)}</button>` : ""}
           ${st === "pending" || st === "rejected" ? `<a class="btn ghost" href="/board/edit/${esc(l.id)}">${esc(t().edit)}</a>` : ""}
           <button type="button" class="btn bad" data-lremove="${esc(l.id)}">${esc(t().remove)}</button>`}
@@ -871,30 +888,61 @@
     </div>`;
   }
 
+  // kiedy przyszło zgłoszenie (i czy było poprawiane) + rodzaj wpisu w kolejce admina
+  const when = (iso) => new Date(iso).toLocaleString(t().locale, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  function stamp(x, typeLabel) {
+    const edited = x.updated_at && x.created_at && new Date(x.updated_at) - new Date(x.created_at) > 60000;
+    return `<span class="stamp">${typeLabel ? `<span class="type-badge">${esc(typeLabel)}</span>` : ""}${esc(t().sentAt(when(x.created_at)))}${edited ? " · " + esc(t().editedAt(when(x.updated_at))) : ""}</span>`;
+  }
+  const newest = (a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+
   function renderMine() {
     const box = $("mine-box");
     box.innerHTML = "";
-    if (DEMO) { box.innerHTML = `<p class="msg warn">demo</p>`; return; }
     if (!state.user) { box.appendChild(loginPanel(t().login)); return; }
     const me = state.user.id;
-    const myStudios = state.studios.filter((s) => s.created_by === me);
-    const myListings = state.listings.filter((l) => l.created_by === me);
-    const myMakers = state.makers.filter((m) => m.created_by === me);
-    const h2 = (txt) => `<h2 style="font-size:20px;font-weight:400;margin-top:12px">${esc(txt)}</h2>`;
-    let html = `<div class="mine"><div class="lead"><h1>${esc(t().mineTitle)}</h1>
-      <span class="form-actions"><a class="btn primary" href="/board/add/">${esc(t().addListing)}</a><a class="btn ghost" href="/studios/add/">${esc(t().addStudio)}</a><a class="btn ghost" href="/makers/add/">${esc(t().addMaker)}</a></span></div>`;
-    html += h2(t().mineListings) + (myListings.length ? myListings.map((l) => listingRow(l, false)).join("") : `<p class="muted">${esc(t().mineListingsEmpty)}</p>`);
-    html += h2(t().mineStudios) + (myStudios.length ? myStudios.map((s) => mineRow(s, false)).join("") : `<p class="muted">${esc(t().mineEmpty)}</p>`);
-    html += h2(t().mineMakers) + (myMakers.length ? myMakers.map((m) => makerRow(m, false)).join("") : `<p class="muted">${esc(t().mineMakersEmpty)}</p>`);
-    if (state.isAdmin) {
-      const pl = state.listings.filter((l) => l.status === "pending");
-      const ps = state.studios.filter((s) => s.status === "pending");
-      html += h2(t().modListings) + (pl.length ? pl.map((l) => listingRow(l, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
-      html += h2(t().modStudios) + (ps.length ? ps.map((s) => mineRow(s, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
-      const pm = state.makers.filter((m) => m.status === "pending");
-      html += h2(t().modMakers) + (pm.length ? pm.map((m) => makerRow(m, true)).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`);
-    }
-    box.innerHTML = html + "</div>";
+    const mine = {
+      listings: state.listings.filter((l) => l.created_by === me).sort(newest),
+      studios: state.studios.filter((s) => s.created_by === me).sort(newest),
+      makers: state.makers.filter((m) => m.created_by === me).sort(newest),
+    };
+    // kolejka admina: wszystkie rodzaje razem, od najnowszego zgłoszenia
+    const queue = !state.isAdmin ? [] : [
+      ...state.listings.filter((l) => l.status === "pending").map((x) => ({ x, html: () => listingRow(x, true) })),
+      ...state.studios.filter((s) => s.status === "pending").map((x) => ({ x, html: () => mineRow(x, true) })),
+      ...state.makers.filter((m) => m.status === "pending").map((x) => ({ x, html: () => makerRow(x, true) })),
+    ].sort((a, b) => newest(a.x, b.x));
+    // opublikowane (admin): tu znajdziesz zatwierdzony wpis, żeby go poprawić
+    const published = !state.isAdmin ? [] : [
+      ...state.listings.filter((l) => l.status === "approved").map((x) => ({ x, type: t().typeListing, title: x.title, path: listingPath(x), edit: `/board/edit/${x.id}` })),
+      ...state.studios.filter((s) => s.status === "approved").map((x) => ({ x, type: t().typeStudio, title: x.name, path: studioPath(x), edit: `/studios/edit/${x.id}` })),
+      ...state.makers.filter((m) => m.status === "approved").map((x) => ({ x, type: t().typeMaker, title: x.name, path: makerPath(x), edit: `/makers/edit/${x.id}` })),
+    ].sort((a, b) => newest(a.x, b.x));
+
+    const tabs = [
+      ...(state.isAdmin ? [["review", t().tabReview, queue.length], ["published", t().tabPublished, published.length]] : []),
+      ["listings", t().mineListings, mine.listings.length],
+      ["studios", t().mineStudios, mine.studios.length],
+      ["makers", t().mineMakers, mine.makers.length],
+    ];
+    if (!tabs.some(([k]) => k === state.mineTab)) state.mineTab = state.isAdmin ? "review" : "listings";
+    const tab = state.mineTab;
+
+    let body = "";
+    if (tab === "review") body = queue.length ? `<p class="small">${esc(t().reviewHint)}</p>` + queue.map((q) => q.html()).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`;
+    else if (tab === "published") body = published.length ? published.map((q) => `<div class="mine-row pub-row">
+        <div class="mine-head"><strong>${esc(q.title)}</strong><span class="type-badge">${esc(q.type)}</span></div>
+        ${stamp(q.x)}
+        <div class="form-actions"><a class="btn ghost" href="${esc(q.path)}">${esc(t().show)}</a><a class="btn ghost" href="${esc(q.edit)}">${esc(t().edit)}</a></div>
+      </div>`).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`;
+    else if (tab === "listings") body = mine.listings.length ? mine.listings.map((l) => listingRow(l, false)).join("") : `<p class="muted">${esc(t().mineListingsEmpty)}</p>`;
+    else if (tab === "studios") body = mine.studios.length ? mine.studios.map((x) => mineRow(x, false)).join("") : `<p class="muted">${esc(t().mineEmpty)}</p>`;
+    else body = mine.makers.length ? mine.makers.map((m) => makerRow(m, false)).join("") : `<p class="muted">${esc(t().mineMakersEmpty)}</p>`;
+
+    box.innerHTML = `<div class="mine"><div class="lead"><h1>${esc(t().mineTitle)}</h1>
+      <span class="form-actions"><a class="btn primary" href="/board/add/">${esc(t().addListing)}</a><a class="btn ghost" href="/studios/add/">${esc(t().addStudio)}</a><a class="btn ghost" href="/makers/add/">${esc(t().addMaker)}</a></span></div>
+      <nav class="tabs mine-tabs" role="tablist">${tabs.map(([k, label, n]) => `<button type="button" role="tab" data-mtab="${k}" aria-selected="${k === tab}">${esc(label)}${n ? ` <span class="count${k === "review" ? " hot" : ""}">${n}</span>` : ""}</button>`).join("")}</nav>
+      ${body}</div>`;
   }
 
   function makerRow(m, admin) {
@@ -902,6 +950,7 @@
     const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
     return `<div class="mine-row">
       <div class="mine-head"><strong>${esc(m.name)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      ${stamp(m, admin && t().typeMaker)}
       <span class="small">${esc(m.city)} · ${(m.products || []).map((p) => esc(t().products[p] || p)).join(", ")}</span>
       ${m.description ? `<span class="small">${esc(m.description)}</span>` : ""}
       ${[m.website_url, m.shop_url, m.instagram_url, m.facebook_url].filter(safeUrl).map((u) => `<a class="small" href="${esc(u)}" target="_blank" rel="noopener nofollow">${esc(u)}</a>`).join("")}
@@ -909,7 +958,8 @@
       <div class="form-actions">
         ${admin ? `<button type="button" class="btn ok" data-kapprove="${esc(m.id)}">${esc(t().approve)}</button>
           <span class="reason" style="flex:1 1 220px"><textarea id="kreason-${esc(m.id)}" rows="1" placeholder="${esc(t().reasonPh)}"></textarea></span>
-          <button type="button" class="btn bad" data-kreject="${esc(m.id)}">${esc(t().reject)}</button>`
+          <button type="button" class="btn bad" data-kreject="${esc(m.id)}">${esc(t().reject)}</button>
+          <a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a>`
         : `${st === "approved" ? `<a class="btn ghost" href="${esc(makerPath(m))}">${esc(t().show)}</a>` : ""}
           <a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a>
           <button type="button" class="btn bad" data-kremove="${esc(m.id)}">${esc(t().remove)}</button>`}
@@ -943,12 +993,14 @@
     const b = e.target.closest("button");
     if (!b) return;
     const d = b.dataset;
+    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
     else if (d.approve) updateStudio(d.approve, { status: "approved" });
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
+    else if (d.mtab) { state.mineTab = d.mtab; renderMine(); }
     else if (d.prod) { state.mfilter.prod = d.prod; renderMakers(); }
     else if (d.kverify) { const m = state.makers.find((x) => String(x.id) === d.kverify); if (m) updateMaker(m.id, { verified: !m.verified }); }
     else if (d.kapprove) updateMaker(d.kapprove, { status: "approved" });
