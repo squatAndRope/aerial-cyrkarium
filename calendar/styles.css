@@ -464,3 +464,15 @@ legend { font-family: var(--font-display); font-weight: 700; font-size: 17px; ma
 .dot-map { background: #6B3F69; box-shadow: 0 0 0 2px var(--lime); }
 .dot-mkt { background: var(--lime); }
 @media (max-width: 560px) { .sections a { padding: 10px 12px; font-size: 13px; } }
+
+/* ---------- 14. Wstęp kalendarza pod zakładkami ----------
+   Jak nagłówek „Gdzie trenować aerial” w Studiach: tytuł po lewej, przycisk dodawania po prawej. */
+.cal-intro { gap: 14px; }
+.cal-lead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; }
+.cal-lead-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cal-intro .intro-title { color: var(--ink); font-size: clamp(22px, 3.6vw, 34px); max-width: none; }
+.cal-intro .lede { color: var(--muted); font-size: 15px; max-width: 60ch; }
+.cal-intro .intro-actions { margin: 0; }
+.cal-intro .intro-free { color: var(--muted); font-size: 13px; }
+.cal-intro .steps { max-width: none; }
+.cal-intro .steps li { color: var(--ink); border-color: var(--line); background: var(--surface); }

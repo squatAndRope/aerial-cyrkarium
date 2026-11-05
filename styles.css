@@ -285,3 +285,6 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .kind { font-size: 12px; font-weight: 700; color: var(--ink); }
 .tag-row { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .price.free { color: var(--ok); }
+
+/* ---------- 13. Pola obowiązkowe (jak w formularzu wydarzenia) ---------- */
+.req::after { content: " *"; color: var(--bad); }

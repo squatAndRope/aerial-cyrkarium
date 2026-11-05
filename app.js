@@ -465,10 +465,10 @@
     else if (!isLive(l)) form = `<div class="panel"><p class="msg warn">${esc(t().mErrClosed)}</p></div>`;
     else form = `<form class="panel" id="msg-form" novalidate>
       <h2>${esc(t().writeTo(l.nick))}</h2>
-      <div class="field"><label for="m-name">${esc(t().mName)}</label><input id="m-name" maxlength="60" autocomplete="given-name"></div>
-      <div class="field"><label for="m-mail">${esc(t().mEmail)}</label><input id="m-mail" type="email" maxlength="200" autocomplete="email"></div>
-      <div class="field"><label for="m-text">${esc(t().mText)}</label><textarea id="m-text" maxlength="2000"></textarea></div>
-      <label class="toggle"><input type="checkbox" id="m-ok"> <span class="small">${esc(t().mConsent)}</span></label>
+      <div class="field"><label class="req" for="m-name">${esc(t().mName)}</label><input id="m-name" maxlength="60" autocomplete="given-name"></div>
+      <div class="field"><label class="req" for="m-mail">${esc(t().mEmail)}</label><input id="m-mail" type="email" maxlength="200" autocomplete="email"></div>
+      <div class="field"><label class="req" for="m-text">${esc(t().mText)}</label><textarea id="m-text" maxlength="2000"></textarea></div>
+      <label class="toggle"><input type="checkbox" id="m-ok"> <span class="small req">${esc(t().mConsent)}</span></label>
       <div id="m-status"></div>
       <button type="submit" class="btn primary" id="m-send">${esc(t().mSend)}</button>
       <p class="small" style="margin:0">${esc(t().mHint)}${privacyLink()}</p>
@@ -510,14 +510,14 @@
     box.innerHTML = `<form class="panel" id="listing-form" novalidate>
       <h2>${esc(l ? t().lFormEdit : t().lFormNew)}</h2>
       <p class="muted" style="margin:0">${esc(t().lFormLede)}</p>
-      <div class="field"><label for="f-cat">${esc(t().lCat)}</label><select id="f-cat"><option value=""></option>${Object.entries(t().cats).map(([k, c]) => `<option value="${k}"${v.category === k ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
-      <div class="field"><span class="label" id="f-kind-label">${esc(t().lKind)}</span><div class="checks" id="f-kind" role="radiogroup" aria-labelledby="f-kind-label"></div></div>
-      <div class="field"><label for="f-title">${esc(t().lTitle)}</label><input id="f-title" maxlength="120" value="${esc(v.title)}"></div>
-      <div class="field"><label for="f-desc">${esc(t().lDesc)}</label><textarea id="f-desc" maxlength="1500">${esc(v.description)}</textarea><p class="hint">${esc(t().lDescHint)}</p></div>
+      <div class="field"><label class="req" for="f-cat">${esc(t().lCat)}</label><select id="f-cat"><option value=""></option>${Object.entries(t().cats).map(([k, c]) => `<option value="${k}"${v.category === k ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+      <div class="field"><span class="label req" id="f-kind-label">${esc(t().lKind)}</span><div class="checks" id="f-kind" role="radiogroup" aria-labelledby="f-kind-label"></div></div>
+      <div class="field"><label class="req" for="f-title">${esc(t().lTitle)}</label><input id="f-title" maxlength="120" value="${esc(v.title)}"></div>
+      <div class="field"><label class="req" for="f-desc">${esc(t().lDesc)}</label><textarea id="f-desc" maxlength="1500">${esc(v.description)}</textarea><p class="hint">${esc(t().lDescHint)}</p></div>
       <div id="f-alert"></div>
       <div class="row2">
-        <div class="field"><label for="f-nick">${esc(t().lNick)}</label><input id="f-nick" maxlength="40" value="${esc(v.nick)}"></div>
-        <div class="field"><label for="f-city">${esc(t().lCity)}</label><input id="f-city" maxlength="60" value="${esc(v.city)}"></div>
+        <div class="field"><label class="req" for="f-nick">${esc(t().lNick)}</label><input id="f-nick" maxlength="40" value="${esc(v.nick)}"></div>
+        <div class="field"><label class="req" for="f-city">${esc(t().lCity)}</label><input id="f-city" maxlength="60" value="${esc(v.city)}"></div>
       </div>
       <div class="field" id="f-price-wrap"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
       <p class="small" style="margin:0">${esc(t().emailPrivate)}${privacyLink()}</p>
@@ -589,12 +589,12 @@
     box.innerHTML = `<form class="panel" id="studio-form" novalidate>
       <h2>${esc(s ? t().formTitleEdit : t().formTitleNew)}</h2>
       <p class="muted" style="margin:0">${esc(t().formLede)}</p>
-      <div class="field"><label for="s-name">${esc(t().fName)}</label><input id="s-name" maxlength="100" value="${esc(v.name)}"></div>
+      <div class="field"><label class="req" for="s-name">${esc(t().fName)}</label><input id="s-name" maxlength="100" value="${esc(v.name)}"></div>
       <div class="row2">
-        <div class="field"><label for="s-city">${esc(t().fCity)}</label><input id="s-city" maxlength="60" value="${esc(v.city)}"></div>
+        <div class="field"><label class="req" for="s-city">${esc(t().fCity)}</label><input id="s-city" maxlength="60" value="${esc(v.city)}"></div>
         <div class="field"><label for="s-address">${esc(t().fAddress)}</label><input id="s-address" maxlength="160" value="${esc(v.address)}"><p class="hint">${esc(t().fAddressHint)}</p></div>
       </div>
-      <div class="field"><span class="label">${esc(t().fDisc)}</span>${checks("disc", t().disciplines, v.disciplines)}</div>
+      <div class="field"><span class="label req">${esc(t().fDisc)}</span>${checks("disc", t().disciplines, v.disciplines)}</div>
       <div class="field"><span class="label">${esc(t().fLevels)}</span>${checks("lvl", t().levels, v.levels)}</div>
       <label class="toggle"><input type="checkbox" id="s-kids"${v.kids ? " checked" : ""}> <span>${esc(t().fKids)}</span></label>
       <div class="field"><label for="s-desc">${esc(t().fDesc)}</label><textarea id="s-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().fDescHint)}</p></div>
@@ -604,8 +604,8 @@
         <div class="field"><label for="s-ig">${esc(t().fInstagram)}</label><input id="s-ig" type="url" inputmode="url" placeholder="https://instagram.com/…" value="${esc(v.instagram_url)}"></div>
         <div class="field"><label for="s-fb">${esc(t().fFacebook)}</label><input id="s-fb" type="url" inputmode="url" placeholder="https://facebook.com/…" value="${esc(v.facebook_url)}"></div>
       </div>
-      <p class="hint" style="margin:0">${esc(t().fLinksHint)}</p>
-      <label class="toggle"><input type="checkbox" id="s-consent"${s ? " checked" : ""}> <span class="small">${esc(t().fConsent)}</span></label>
+      <p class="hint req" style="margin:0">${esc(t().fLinksHint)}</p>
+      <label class="toggle"><input type="checkbox" id="s-consent"${s ? " checked" : ""}> <span class="small req">${esc(t().fConsent)}</span></label>
       <div id="form-msg"></div>
       <div class="form-actions"><button type="submit" class="btn primary" id="s-submit">${esc(t().submit)}</button><a class="btn ghost" href="${s ? "/account/" : "/studios/"}">${esc(t().cancel)}</a></div>
     </form>`;
