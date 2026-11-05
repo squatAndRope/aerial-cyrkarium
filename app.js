@@ -84,7 +84,7 @@
     studios: [],        // wszystko, co baza pozwala przeczytać tej osobie
     events: [],         // nadchodzące, zatwierdzone wydarzenia z Aerial Events
     loaded: false, loadFailed: false,
-    filter: { disc: "all", q: "", level: "", kids: false },
+    filter: { disc: "all", q: "", level: "", kids: false, open: false, rental: false },
     current: null,      // id otwartego profilu
     listings: [],       // ogłoszenia, które baza pozwala przeczytać tej osobie
     stats: {},          // liczba wiadomości przy moich ogłoszeniach
@@ -104,9 +104,9 @@
   const publicStudios = () => state.studios.filter((s) => s.status === "approved" && s.lat != null);
 
   const DEMO_STUDIOS = [
-    { id: "d1", name: "Studio Orbita (przykład)", city: "Warszawa", address: "ul. Przykładowa 1", lat: 52.19, lng: 21.0, disciplines: ["hoop", "silks", "hammock"], levels: ["beginner", "intermediate", "advanced"], kids: true, verified: true, description: "Dwie sale, 9 punktów zawieszenia, wysokość 7 m. Open training w niedziele.", website_url: "https://example.com", instagram_url: "https://instagram.com/", status: "approved" },
+    { id: "d1", name: "Studio Orbita (przykład)", city: "Warszawa", address: "ul. Przykładowa 1", lat: 52.19, lng: 21.0, disciplines: ["hoop", "silks", "hammock"], levels: ["beginner", "intermediate", "advanced"], kids: true, open_training: true, rental: true, verified: true, description: "Dwie sale, 9 punktów zawieszenia, wysokość 7 m. Open training w niedziele.", website_url: "https://example.com", instagram_url: "https://instagram.com/", status: "approved" },
     { id: "d2", name: "Lina i Koło (przykład)", city: "Warszawa", address: "", lat: 52.26, lng: 21.06, disciplines: ["rope", "hoop"], levels: ["beginner", "intermediate"], kids: false, verified: false, description: "Kameralne studio, grupy do 6 osób.", instagram_url: "https://instagram.com/", status: "approved" },
-    { id: "d3", name: "Nad Wisłą Aerial (przykład)", city: "Kraków", address: "", lat: 50.04, lng: 19.96, disciplines: ["silks", "trapeze", "hoop"], levels: ["beginner", "intermediate", "advanced"], kids: true, verified: true, description: "Sufit 8 m, kursy trapezu i przygotowanie do zawodów.", website_url: "https://example.com", status: "approved" },
+    { id: "d3", name: "Nad Wisłą Aerial (przykład)", city: "Kraków", address: "", lat: 50.04, lng: 19.96, disciplines: ["silks", "trapeze", "hoop"], levels: ["beginner", "intermediate", "advanced"], kids: true, rental: true, verified: true, description: "Sufit 8 m, kursy trapezu i przygotowanie do zawodów.", website_url: "https://example.com", status: "approved" },
     { id: "d4", name: "Wzlot (przykład)", city: "Wrocław", address: "", lat: 51.12, lng: 17.03, disciplines: ["hoop", "hammock"], levels: ["beginner"], kids: true, verified: true, description: "Joga w hamakach i koło, zajęcia dla dzieci od 7 lat.", website_url: "https://example.com", status: "approved" },
     { id: "d5", name: "Mewa Aerial (przykład)", city: "Gdańsk", address: "", lat: 54.38, lng: 18.6, disciplines: ["hoop", "silks"], levels: ["beginner", "intermediate"], kids: false, verified: false, description: "Zajęcia popołudniowe i weekendowe warsztaty.", facebook_url: "https://facebook.com/", status: "approved" },
   ];
@@ -277,6 +277,8 @@
     if (f.disc !== "all" && !(s.disciplines || []).includes(f.disc)) return false;
     if (f.level && !(s.levels || []).includes(f.level)) return false;
     if (f.kids && !s.kids) return false;
+    if (f.open && !s.open_training) return false;
+    if (f.rental && !s.rental) return false;
     if (f.q) {
       const q = cityKey(f.q);
       if (!cityKey(s.name).includes(q) && !cityKey(s.city).includes(q)) return false;
@@ -292,6 +294,8 @@
     sel.innerHTML = `<option value="">${esc(t().anyLevel)}</option>` + Object.entries(t().levels).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
     sel.value = state.filter.level;
     $("f-kids").checked = state.filter.kids;
+    $("f-open").checked = state.filter.open;
+    $("f-rental").checked = state.filter.rental;
   }
 
   function renderStudios() {
@@ -307,9 +311,9 @@
     else box.innerHTML = list.map((s) => `<button type="button" class="st" data-st="${esc(s.id)}" aria-current="${s.id === state.current}">
         <span class="st-head"><strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
         <span class="st-meta">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
-        <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}</span>
+        <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${s.open_training ? `<span class="tag tag-extra">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag tag-extra">${esc(t().rentalTag)}</span>` : ""}</span>
       </button>`).join("");
-    $("clear-f")?.addEventListener("click", () => { state.filter = { disc: "all", q: "", level: "", kids: false }; $("f-q").value = ""; renderStudios(); });
+    $("clear-f")?.addEventListener("click", () => { state.filter = { disc: "all", q: "", level: "", kids: false, open: false, rental: false }; $("f-q").value = ""; renderStudios(); });
 
     renderMap(list);
     renderProfile();
@@ -382,7 +386,7 @@
         </div>
         <h2>${esc(s.name)}</h2>
         ${s.description ? `<p>${esc(s.description)}</p>` : ""}
-        <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}</div>
+        <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
         <p class="small">${esc(t().noContactNote)}</p>
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
@@ -596,7 +600,11 @@
       </div>
       <div class="field"><span class="label req">${esc(t().fDisc)}</span>${checks("disc", t().disciplines, v.disciplines)}</div>
       <div class="field"><span class="label">${esc(t().fLevels)}</span>${checks("lvl", t().levels, v.levels)}</div>
-      <label class="toggle"><input type="checkbox" id="s-kids"${v.kids ? " checked" : ""}> <span>${esc(t().fKids)}</span></label>
+      <div class="field"><span class="label">${esc(t().fExtras)}</span>
+        <label class="toggle"><input type="checkbox" id="s-kids"${v.kids ? " checked" : ""}> <span>${esc(t().fKids)}</span></label>
+        <label class="toggle"><input type="checkbox" id="s-open"${v.open_training ? " checked" : ""}> <span>${esc(t().fOpen)}</span></label>
+        <label class="toggle"><input type="checkbox" id="s-rental"${v.rental ? " checked" : ""}> <span>${esc(t().fRental)}</span></label>
+      </div>
       <div class="field"><label for="s-desc">${esc(t().fDesc)}</label><textarea id="s-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().fDescHint)}</p></div>
       <div id="desc-alert"></div>
       <div class="field"><label for="s-web">${esc(t().fWebsite)}</label><input id="s-web" type="url" inputmode="url" placeholder="https://" value="${esc(v.website_url)}"></div>
@@ -627,6 +635,7 @@
       const row = {
         name: val("s-name"), city: val("s-city"), address: val("s-address") || null,
         disciplines: picked("disc"), levels: picked("lvl"), kids: $("s-kids").checked,
+        open_training: $("s-open").checked, rental: $("s-rental").checked,
         description: val("s-desc") || null,
         website_url: val("s-web") || null, instagram_url: val("s-ig") || null, facebook_url: val("s-fb") || null,
       };
@@ -774,6 +783,8 @@
   $("f-q").addEventListener("input", (e) => { state.filter.q = e.target.value; renderStudios(); });
   $("f-level").addEventListener("change", (e) => { state.filter.level = e.target.value; renderStudios(); });
   $("f-kids").addEventListener("change", (e) => { state.filter.kids = e.target.checked; renderStudios(); });
+  $("f-open").addEventListener("change", (e) => { state.filter.open = e.target.checked; renderStudios(); });
+  $("f-rental").addEventListener("change", (e) => { state.filter.rental = e.target.checked; renderStudios(); });
   $("l-q").addEventListener("input", (e) => { state.lfilter.q = e.target.value; renderBoard(); });
   $("foot-events").href = CFG.eventsUrl;
   const setPrivacyHref = () => { $("foot-privacy").href = privacyHref(); };

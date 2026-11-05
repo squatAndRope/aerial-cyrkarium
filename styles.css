@@ -288,3 +288,6 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 
 /* ---------- 13. Pola obowiązkowe (jak w formularzu wydarzenia) ---------- */
 .req::after { content: " *"; color: var(--bad); }
+
+/* ---------- 14. Open training i wynajem ---------- */
+.tag-extra { background: var(--ok-soft); color: var(--ok); }
