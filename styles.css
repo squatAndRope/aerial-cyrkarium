@@ -277,3 +277,10 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .t-map { background: var(--plum); }
 .t-mkt { background: var(--green); }
 @media (prefers-reduced-motion: no-preference) { .tile { transition: transform .15s; } .tile:hover { transform: translateY(-2px); } }
+
+/* ---------- 12. Rodzaj ogłoszenia ---------- */
+.kind-chips .chip { padding: 5px 12px; font-size: 13px; }
+.mkt .kind-chips .chip[aria-pressed="true"] { background: var(--lime); border-color: var(--lime); color: var(--lime-ink); }
+.kind { font-size: 12px; font-weight: 700; color: var(--ink); }
+.tag-row { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.price.free { color: var(--ok); }

@@ -88,16 +88,18 @@
     current: null,      // id otwartego profilu
     listings: [],       // ogłoszenia, które baza pozwala przeczytać tej osobie
     stats: {},          // liczba wiadomości przy moich ogłoszeniach
-    lfilter: { cat: "all", q: "" },
+    lfilter: { cat: "all", kind: "all", q: "" },
     listingsLoaded: false,
   };
 
   const inDays = (n) => new Date(Date.now() + n * 86400000).toISOString();
   const DEMO_LISTINGS = [
-    { id: "l1", category: "partner", title: "Partnerka do duetu na kole, poziom średni (przykład)", description: "Chcę przygotować duet na zawody wiosną. Trenuję 2 razy w tygodniu, mogę dojeżdżać do 30 km. Mam własne koło 90 cm.", city: "Poznań", nick: "Ola_hoop", price: null, status: "approved", created_at: inDays(-2), expires_at: inDays(58) },
-    { id: "l2", category: "gear", title: "Sprzedam szarfy 9 m, fioletowe (przykład)", description: "Używane jeden sezon, bez zaciągnięć. Odbiór osobisty albo wysyłka.", city: "Gdańsk", nick: "Marta", price: "450 zł", status: "approved", created_at: inDays(-5), expires_at: inDays(55) },
-    { id: "l3", category: "job", title: "Studio szuka instruktorki aerial hoop (przykład)", description: "Zajęcia we wtorki wieczorem, grupa początkująca, od stycznia.", city: "Łódź", nick: "Studio Lot", price: null, status: "approved", created_at: inDays(-8), expires_at: inDays(52) },
-    { id: "l4", category: "space", title: "Wynajmę salę z punktami do zawieszenia (przykład)", description: "Wysokość 6 m, 4 punkty, materace. Wolne weekendy i poranki w tygodniu.", city: "Warszawa", nick: "Hala Wzlot", price: "80 zł / h", status: "approved", created_at: inDays(-9), expires_at: inDays(51) },
+    { id: "l1", category: "partner", kind: "seek", title: "Partnerka do duetu na kole, poziom średni (przykład)", description: "Chcę przygotować duet na zawody wiosną. Trenuję 2 razy w tygodniu, mogę dojeżdżać do 30 km. Mam własne koło 90 cm.", city: "Poznań", nick: "Ola_hoop", price: null, status: "approved", created_at: inDays(-2), expires_at: inDays(58) },
+    { id: "l2", category: "gear", kind: "sell", title: "Sprzedam szarfy 9 m, fioletowe (przykład)", description: "Używane jeden sezon, bez zaciągnięć. Odbiór osobisty albo wysyłka.", city: "Gdańsk", nick: "Marta", price: "450 zł", status: "approved", created_at: inDays(-5), expires_at: inDays(55) },
+    { id: "l3", category: "job", kind: "offer", title: "Studio szuka instruktorki aerial hoop (przykład)", description: "Zajęcia we wtorki wieczorem, grupa początkująca, od stycznia.", city: "Łódź", nick: "Studio Lot", price: null, status: "approved", created_at: inDays(-8), expires_at: inDays(52) },
+    { id: "l4", category: "space", kind: "offer", title: "Wynajmę salę z punktami do zawieszenia (przykład)", description: "Wysokość 6 m, 4 punkty, materace. Wolne weekendy i poranki w tygodniu.", city: "Warszawa", nick: "Hala Wzlot", price: "80 zł / h", status: "approved", created_at: inDays(-9), expires_at: inDays(51) },
+    { id: "l5", category: "gear", kind: "buy", title: "Szukam szarfy 9 m, najlepiej czerwonej (przykład)", description: "Może być używana, ważne żeby bez zaciągnięć. Odbiór w Krakowie albo wysyłka.", city: "Kraków", nick: "Ania", price: null, status: "approved", created_at: inDays(-1), expires_at: inDays(59) },
+    { id: "l6", category: "gear", kind: "give", title: "Oddam kostium startowy, rozmiar S (przykład)", description: "Fioletowy, z cekinami, używany na dwóch zawodach.", city: "Wrocław", nick: "Kasia", price: null, status: "approved", created_at: inDays(-3), expires_at: inDays(57) },
   ];
   const publicStudios = () => state.studios.filter((s) => s.status === "approved" && s.lat != null);
 
@@ -413,14 +415,27 @@
   }
 
   // ---------------- 5b. Ogłoszenia ----------------
+  // kategoria (czego dotyczy) + rodzaj (co robi autor), np. [Sprzęt i stroje] Sprzedam
   function catTag(c) { return `<span class="cat cat-${esc(c)}">${esc(t().cats[c] || c)}</span>`; }
+  const kindLabel = (l) => (t().kinds[l.category] || {})[l.kind] || "";
+  const listingTag = (l) => `<span class="tag-row">${catTag(l.category)}<span class="kind">${esc(kindLabel(l))}</span></span>`;
+  const hasPrice = (kind) => kind === "sell" || kind === "offer";
+  const priceHtml = (l) => l.kind === "give" ? `<span class="price free">${esc(t().free)}</span>` : l.price ? `<span class="price">${esc(l.price)}</span>` : "";
 
   function renderBoard() {
     $("cat-chips").innerHTML = [["all", t().all], ...Object.entries(t().cats)]
       .map(([k, v]) => `<button type="button" class="chip" data-lcat="${k}" aria-pressed="${state.lfilter.cat === k}">${esc(v)}</button>`).join("");
+    // druga linia filtrów: rodzaje w wybranej kategorii (gdy jest z czego wybierać)
+    const F = state.lfilter;
+    const kinds = F.cat === "all" ? {} : (t().kinds[F.cat] || {});
+    const kbox = $("kind-chips");
+    kbox.hidden = Object.keys(kinds).length < 2;
+    kbox.innerHTML = kbox.hidden ? "" : [["all", t().all], ...Object.entries(kinds)]
+      .map(([k, v]) => `<button type="button" class="chip" data-lkind="${k}" aria-pressed="${F.kind === k}">${esc(v)}</button>`).join("");
     const live = state.listings.filter(isLive);
-    const q = cityKey(state.lfilter.q);
-    const list = live.filter((l) => (state.lfilter.cat === "all" || l.category === state.lfilter.cat)
+    const q = cityKey(F.q);
+    const list = live.filter((l) => (F.cat === "all" || l.category === F.cat)
+      && (F.kind === "all" || l.kind === F.kind)
       && (!q || cityKey(l.title + " " + l.description + " " + l.city).includes(q)));
     const box = $("listing-grid");
     if (!state.listingsLoaded) { box.innerHTML = ""; return; }
@@ -428,10 +443,10 @@
     if (!list.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardNoMatch)}</p></div>`; return; }
     const now = new Date();
     box.innerHTML = list.map((l) => `<article class="card">
-      <div class="card-top">${catTag(l.category)}<span>${esc(t().ago(daysBetween(new Date(l.created_at), now)))}</span></div>
+      <div class="card-top">${listingTag(l)}<span>${esc(t().ago(daysBetween(new Date(l.created_at), now)))}</span></div>
       <h3>${esc(l.title)}</h3>
       <p>${esc(l.description)}</p>
-      <div class="card-foot"><span class="who">${esc(l.nick)} · ${esc(l.city)}${l.price ? ` · <span class="price">${esc(l.price)}</span>` : ""}</span>
+      <div class="card-foot"><span class="who">${esc(l.nick)} · ${esc(l.city)}${priceHtml(l) ? " · " + priceHtml(l) : ""}</span>
         <a class="btn primary" href="${esc(listingPath(l))}">${esc(t().write)}</a></div>
     </article>`).join("");
   }
@@ -460,9 +475,9 @@
     </form>`;
     box.innerHTML = `<div class="view">${back}<div class="detail">
       <section class="panel">
-        <div>${catTag(l.category)}</div>
+        <div>${listingTag(l)}</div>
         <h1>${esc(l.title)}</h1>
-        <p class="small" style="margin:0">${meta}${l.price ? ` · <strong class="price">${esc(l.price)}</strong>` : ""}</p>
+        <p class="small" style="margin:0">${meta}${priceHtml(l) ? ` · <strong>${priceHtml(l)}</strong>` : ""}</p>
         <p class="desc">${esc(l.description)}</p>
         <a class="small" href="${esc(report)}">${esc(t().report)}</a>
       </section>${form}</div></div>`;
@@ -496,6 +511,7 @@
       <h2>${esc(l ? t().lFormEdit : t().lFormNew)}</h2>
       <p class="muted" style="margin:0">${esc(t().lFormLede)}</p>
       <div class="field"><label for="f-cat">${esc(t().lCat)}</label><select id="f-cat"><option value=""></option>${Object.entries(t().cats).map(([k, c]) => `<option value="${k}"${v.category === k ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+      <div class="field"><span class="label" id="f-kind-label">${esc(t().lKind)}</span><div class="checks" id="f-kind" role="radiogroup" aria-labelledby="f-kind-label"></div></div>
       <div class="field"><label for="f-title">${esc(t().lTitle)}</label><input id="f-title" maxlength="120" value="${esc(v.title)}"></div>
       <div class="field"><label for="f-desc">${esc(t().lDesc)}</label><textarea id="f-desc" maxlength="1500">${esc(v.description)}</textarea><p class="hint">${esc(t().lDescHint)}</p></div>
       <div id="f-alert"></div>
@@ -503,11 +519,25 @@
         <div class="field"><label for="f-nick">${esc(t().lNick)}</label><input id="f-nick" maxlength="40" value="${esc(v.nick)}"></div>
         <div class="field"><label for="f-city">${esc(t().lCity)}</label><input id="f-city" maxlength="60" value="${esc(v.city)}"></div>
       </div>
-      <div class="field"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
+      <div class="field" id="f-price-wrap"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
       <p class="small" style="margin:0">${esc(t().emailPrivate)}${privacyLink()}</p>
       <div id="f-msg"></div>
       <div class="form-actions"><button type="submit" class="btn primary" id="f-submit">${esc(t().lSubmit)}</button><a class="btn ghost" href="${l ? "/account/" : "/board/"}">${esc(t().cancel)}</a></div>
     </form>`;
+
+    // rodzaj zależy od kategorii; cena tylko przy „sprzedam” i „wynajmę / oferuję”
+    let kind = v.kind || "";
+    const drawKinds = () => {
+      const opts = t().kinds[$("f-cat").value] || {};
+      if (!opts[kind]) kind = Object.keys(opts).length === 1 ? Object.keys(opts)[0] : "";
+      $("f-kind").innerHTML = Object.keys(opts).length
+        ? Object.entries(opts).map(([k, lab]) => `<label><input type="radio" name="f-kind" value="${k}"${k === kind ? " checked" : ""}> ${esc(lab)}</label>`).join("")
+        : `<span class="small">${esc(t().lKindPick)}</span>`;
+      $("f-price-wrap").hidden = !hasPrice(kind);
+    };
+    $("f-cat").addEventListener("change", drawKinds);
+    $("f-kind").addEventListener("change", (e) => { kind = e.target.value; $("f-price-wrap").hidden = !hasPrice(kind); });
+    drawKinds();
 
     const fields = ["f-title", "f-desc", "f-nick", "f-price"];
     const check = () => {
@@ -524,8 +554,8 @@
       const msg = $("f-msg");
       const fail = (m) => { msg.innerHTML = `<p class="msg bad" role="alert">${esc(m)}</p>`; };
       const val = (id) => $(id).value.trim();
-      const row = { category: val("f-cat"), title: val("f-title"), description: val("f-desc"), nick: val("f-nick"), city: val("f-city"), price: val("f-price") || null };
-      if (!row.category || row.title.length < 5 || row.description.length < 10 || row.nick.length < 2 || row.city.length < 2) return fail(t().lErrRequired);
+      const row = { category: val("f-cat"), kind, title: val("f-title"), description: val("f-desc"), nick: val("f-nick"), city: val("f-city"), price: hasPrice(kind) ? val("f-price") || null : null };
+      if (!row.category || !row.kind || row.title.length < 5 || row.description.length < 10 || row.nick.length < 2 || row.city.length < 2) return fail(t().lErrRequired);
       const found = check();
       if (found.length) return fail(t().lErrContact(found.join(t().and)));
       if (DEMO) { msg.innerHTML = `<p class="msg ok">${esc(t().lSaved)} (demo)</p>`; return; }
@@ -658,7 +688,7 @@
     const n = state.stats[l.id] || 0;
     return `<div class="mine-row">
       <div class="mine-head"><strong>${esc(l.title)}</strong><span class="badge ${kind}">${esc(t().lStatus[st])}</span></div>
-      <span class="small">${esc(t().cats[l.category] || l.category)} · ${esc(l.nick)} · ${esc(l.city)}${l.price ? " · " + esc(l.price) : ""}${st === "approved" ? " · " + esc(t().expiresIn(daysBetween(new Date(), new Date(l.expires_at)) + 1)) : ""}</span>
+      <span class="small">${esc(t().cats[l.category] || l.category)} · ${esc(kindLabel(l))} · ${esc(l.nick)} · ${esc(l.city)}${l.price ? " · " + esc(l.price) : ""}${st === "approved" ? " · " + esc(t().expiresIn(daysBetween(new Date(), new Date(l.expires_at)) + 1)) : ""}</span>
       <span class="small">${esc(l.description)}</span>
       ${!admin ? `<span class="small"><strong>${esc(t().lMessages(n))}</strong></span>` : ""}
       ${st === "rejected" && l.rejection_reason ? `<p class="msg bad">${esc(l.rejection_reason)}</p>` : ""}
@@ -720,7 +750,8 @@
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
     else if (d.approve) updateStudio(d.approve, { status: "approved" });
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
-    else if (d.lcat) { state.lfilter.cat = d.lcat; renderBoard(); }
+    else if (d.lcat) { state.lfilter.cat = d.lcat; state.lfilter.kind = "all"; renderBoard(); }
+    else if (d.lkind) { state.lfilter.kind = d.lkind; renderBoard(); }
     else if (d.lapprove) updateListing(d.lapprove, { status: "approved" });
     else if (d.lreject) updateListing(d.lreject, { status: "rejected", rejection_reason: ($("lreason-" + d.lreject)?.value || "").trim() || null });
     else if (d.lclose) {

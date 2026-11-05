@@ -20,7 +20,14 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 const FROM = "Aerial w Polsce <aerialevents@cyrkarium.com>";
 const SITE = "https://aerial.cyrkarium.com";
 const C = { violet: "#4B3373", green: "#3D562B", lilac: "#CAC2DF", lime: "#D1DFA8", bg: "#F4F2F8", ink: "#2A2140", muted: "#6B6280" };
-const CATS: Record<string, string> = { partner: "Szukam partnera", gear: "Sprzęt", space: "Sala / studio", job: "Praca / zastępstwo" };
+const CATS: Record<string, string> = { partner: "Partner", gear: "Sprzęt i stroje", space: "Sala / studio", job: "Praca / zastępstwo" };
+// rodzaj ogłoszenia (te same nazwy co w i18n.js strony)
+const KINDS: Record<string, Record<string, string>> = {
+  partner: { seek: "Szukam partnera" },
+  gear: { sell: "Sprzedam", buy: "Kupię / szukam", give: "Oddam za darmo" },
+  space: { offer: "Wynajmę", seek: "Szukam sali" },
+  job: { offer: "Szukam instruktora", seek: "Szukam pracy / zastępstwa" },
+};
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
@@ -77,7 +84,9 @@ export function messageMail(l: Row, m: Row, authorEmail: string): Mail {
 }
 
 function listingCard(l: Row): string {
-  return quote(`${CATS[l.category] ?? l.category} · ${l.city} · ${l.nick}${l.price ? " · " + l.price : ""}\n\n${l.title}\n\n${l.description}`);
+  const kind = KINDS[l.category]?.[l.kind] ?? "";
+  const price = l.kind === "give" ? "za darmo" : l.price;
+  return quote(`${CATS[l.category] ?? l.category}${kind ? " · " + kind : ""} · ${l.city} · ${l.nick}${price ? " · " + price : ""}\n\n${l.title}\n\n${l.description}`);
 }
 
 export function adminListingMail(l: Row, edited: boolean, admins: string[]): Mail {
