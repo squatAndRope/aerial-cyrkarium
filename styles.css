@@ -161,7 +161,7 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 @media (max-width: 760px) { #map { height: 340px; } }
 .list { display: flex; flex-direction: column; gap: 8px; max-height: 460px; overflow: auto; padding: 2px; }
 @media (max-width: 760px) { .list { max-height: none; } }
-.st { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.st { text-align: left; color: inherit; text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; width: 100%; }
 .st:hover { border-color: var(--plum); }
 .st[aria-current="true"] { border-color: var(--plum); box-shadow: inset 4px 0 0 var(--plum); }
 .st-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
@@ -325,3 +325,6 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .maker-head, .profile-title, .mine-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .logo-field { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .field .logo-field input[type=file] { border: 0; padding: 0; min-height: 0; background: none; width: auto; }
+.logo-letter { display: inline-grid; place-items: center; background: var(--lilac); color: var(--violet); border-color: transparent; font-family: var(--font-display); font-weight: 500; font-size: 18px; line-height: 1; }
+.logo-letter.sm { font-size: 14px; }
+.logo-letter.big { font-size: 28px; }

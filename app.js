@@ -44,7 +44,11 @@
 
   // ---------------- logo (Supabase Storage, pojemnik „logos”) ----------------
   const logoUrl = (p) => (p ? `${CFG.supabaseUrl}/storage/v1/object/public/logos/${p}` : null);
-  const logoImg = (p, name, cls = "logo") => (p ? `<img class="${cls}" src="${esc(logoUrl(p))}" alt="${esc(t().logoOf(name))}" loading="lazy">` : "");
+  // bez logo: okrągły znaczek z pierwszą literą nazwy, żeby kafelki były równe
+  const initial = (name) => (String(name || "").trim().match(/[\p{L}\p{N}]/u) || ["•"])[0].toUpperCase();
+  const logoImg = (p, name, cls = "logo") => (p
+    ? `<img class="${cls}" src="${esc(logoUrl(p))}" alt="${esc(t().logoOf(name))}" loading="lazy">`
+    : `<span class="${cls} logo-letter" aria-hidden="true">${esc(initial(name))}</span>`);
   // zmniejsza obrazek do 400 px (dłuższy bok) i zapisuje jako WebP; Safari bez WebP dostaje PNG
   async function shrinkLogo(file) {
     const bmp = await createImageBitmap(file);
@@ -345,6 +349,8 @@
     }
     else if (view === "dodaj-producenta") renderMakerForm(id);
     else if (view === "moje") renderMine();
+    // adres kanoniczny = bieżąca ścieżka (bez ?demo i #), żeby Google nie dublował stron
+    const canon = $("canonical"); if (canon) canon.href = "https://aerial.cyrkarium.com" + location.pathname;
     document.title = view === "home" ? `${t().brand} · Fundacja Cyrkarium` : `${title} · ${t().brand}`;
   }
 
@@ -385,11 +391,12 @@
     if (!state.loaded) box.innerHTML = "";
     else if (!all.length) box.innerHTML = `<div class="empty"><p>${esc(t().emptyMap)}</p><a class="btn primary" href="/studios/add/">${esc(t().addStudio)}</a></div>`;
     else if (!list.length) box.innerHTML = `<div class="empty"><p>${esc(t().noMatch)}</p><button type="button" class="btn ghost" id="clear-f">${esc(t().clearFilters)}</button></div>`;
-    else box.innerHTML = list.map((s) => `<button type="button" class="st" data-st="${esc(s.id)}" aria-current="${s.id === state.current}">
+    // prawdziwe linki (a nie przyciski), żeby Google widział profile studiów
+    else box.innerHTML = list.map((s) => `<a class="st" href="${esc(studioPath(s))}" aria-current="${s.id === state.current}">
         <span class="st-head">${logoImg(s.logo_path, s.name, "logo sm")}<strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
         <span class="st-meta">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
         <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${s.open_training ? `<span class="tag tag-extra">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag tag-extra">${esc(t().rentalTag)}</span>` : ""}</span>
-      </button>`).join("");
+      </a>`).join("");
     $("clear-f")?.addEventListener("click", () => { state.filter = { disc: "all", q: "", level: "", kids: false, open: false, rental: false }; $("f-q").value = ""; renderStudios(); });
 
     renderMap(list);

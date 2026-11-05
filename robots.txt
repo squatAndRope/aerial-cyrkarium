@@ -1,2 +1,11 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /account/
+Disallow: /studios/add/
+Disallow: /studios/edit/
+Disallow: /board/add/
+Disallow: /board/edit/
+Disallow: /makers/add/
+Disallow: /makers/edit/
+
+Sitemap: https://aerial.cyrkarium.com/sitemap.xml
