@@ -42,6 +42,39 @@
   const privacyLink = () => ` <a href="${privacyHref()}" target="_blank" rel="noopener">${esc(t().privacy)}</a>`;
   const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? u : null);
 
+  // ---------------- logo (Supabase Storage, pojemnik „logos”) ----------------
+  const logoUrl = (p) => (p ? `${CFG.supabaseUrl}/storage/v1/object/public/logos/${p}` : null);
+  const logoImg = (p, name, cls = "logo") => (p ? `<img class="${cls}" src="${esc(logoUrl(p))}" alt="${esc(t().logoOf(name))}" loading="lazy">` : "");
+  // zmniejsza obrazek do 400 px (dłuższy bok) i zapisuje jako WebP; Safari bez WebP dostaje PNG
+  async function shrinkLogo(file) {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 400 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((res) => c.toBlob(res, "image/webp", 0.86));
+    return blob.type === "image/webp" ? { blob, ext: "webp" } : { blob: await new Promise((res) => c.toBlob(res, "image/png")), ext: "png" };
+  }
+  // pole „Logo” w formularzu (studio i producent)
+  const logoField = (prefix, path, name) => `<div class="field"><label for="${prefix}-logo">${esc(t().fLogo)}</label>
+      <div class="logo-field">${path ? `<span id="${prefix}-logo-now">${logoImg(path, name, "logo big")}</span>` : ""}
+        <input id="${prefix}-logo" type="file" accept="image/png,image/jpeg,image/webp"></div>
+      ${path ? `<label class="toggle"><input type="checkbox" id="${prefix}-logo-del"> <span class="small">${esc(t().fLogoRemove)}</span></label>` : ""}
+      <p class="hint">${esc(t().fLogoHint)}</p></div>`;
+  // przy zapisie: nowe logo → wgraj; „usuń” → wyczyść; zwraca { logo_path, old } (old = plik do skasowania po zapisie)
+  async function prepareLogo(prefix, currentPath) {
+    const file = $(prefix + "-logo")?.files?.[0];
+    const del = $(prefix + "-logo-del")?.checked;
+    if (!file) return del ? { logo_path: null, old: currentPath } : { logo_path: currentPath || null, old: null };
+    if (!/^image\//.test(file.type)) throw new Error("type");
+    const { blob, ext } = await shrinkLogo(file);
+    const path = `${state.user.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await state.sb.storage.from("logos").upload(path, blob, { contentType: blob.type, upsert: false });
+    if (error) { console.warn(error); throw new Error("upload"); }
+    return { logo_path: path, old: currentPath || null };
+  }
+  const dropLogo = (path) => { if (path && state.sb) state.sb.storage.from("logos").remove([path]).catch(() => {}); };
+
   // adresy: /studios/real-passion-krakow, /board/sprzedam-szarfy-9m-981aa275
   // Nazwy ścieżek są po angielsku, wspólne dla wszystkich wersji językowych.
   const slugify = (x) => cityKey(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70);
@@ -353,7 +386,7 @@
     else if (!all.length) box.innerHTML = `<div class="empty"><p>${esc(t().emptyMap)}</p><a class="btn primary" href="/studios/add/">${esc(t().addStudio)}</a></div>`;
     else if (!list.length) box.innerHTML = `<div class="empty"><p>${esc(t().noMatch)}</p><button type="button" class="btn ghost" id="clear-f">${esc(t().clearFilters)}</button></div>`;
     else box.innerHTML = list.map((s) => `<button type="button" class="st" data-st="${esc(s.id)}" aria-current="${s.id === state.current}">
-        <span class="st-head"><strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
+        <span class="st-head">${logoImg(s.logo_path, s.name, "logo sm")}<strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
         <span class="st-meta">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
         <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${s.open_training ? `<span class="tag tag-extra">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag tag-extra">${esc(t().rentalTag)}</span>` : ""}</span>
       </button>`).join("");
@@ -428,7 +461,7 @@
           ${s.status !== "approved" ? `<span class="badge bad">${esc(t().status[s.status])}</span>` : ""}
           <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
         </div>
-        <h2>${esc(s.name)}</h2>
+        <div class="profile-title">${logoImg(s.logo_path, s.name, "logo big")}<h2>${esc(s.name)}</h2></div>
         ${s.description ? `<p>${esc(s.description)}</p>` : ""}
         <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
@@ -640,7 +673,7 @@
     if (!list.length) { box.innerHTML = `<div class="empty"><p>${esc(t().makersNoMatch)}</p></div>`; return; }
     box.innerHTML = list.map((m) => `<a class="card maker-card" href="${esc(makerPath(m))}">
       <div class="card-top"><span>${esc(m.city)}</span>${m.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</div>
-      <h3>${esc(m.name)}</h3>
+      <div class="maker-head">${logoImg(m.logo_path, m.name)}<h3>${esc(m.name)}</h3></div>
       ${m.description ? `<p>${esc(m.description)}</p>` : ""}
       <span class="tags">${makerTags(m)}</span>
     </a>`).join("");
@@ -661,7 +694,7 @@
           ${m.status !== "approved" ? `<span class="badge bad">${esc(t().status[m.status])}</span>` : ""}
           <span class="small">${esc(m.city)}</span>
         </div>
-        <h2>${esc(m.name)}</h2>
+        <div class="profile-title">${logoImg(m.logo_path, m.name, "logo big")}<h2>${esc(m.name)}</h2></div>
         ${m.description ? `<p>${esc(m.description)}</p>` : ""}
         <div class="tags">${makerTags(m)}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
@@ -694,6 +727,7 @@
       </div>
       <div class="field"><label for="k-desc">${esc(t().fDesc)}</label><textarea id="k-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().mfDescHint)}</p></div>
       <div id="k-alert"></div>
+      ${logoField("k", v.logo_path, v.name)}
       <div class="row2">
         <div class="field"><label for="k-web">${esc(t().fWebsite)}</label><input id="k-web" type="url" inputmode="url" placeholder="https://" value="${esc(v.website_url)}"></div>
         <div class="field"><label for="k-shop">${esc(t().mfShop)}</label><input id="k-shop" type="url" inputmode="url" placeholder="https://" value="${esc(v.shop_url)}"></div>
@@ -736,9 +770,13 @@
       if (!$("k-consent").checked) return fail(t().errConsent);
       if (DEMO) { msg.innerHTML = `<p class="msg ok">${esc(t().mSaved)} (demo)</p>`; return; }
       const btn = $("k-submit"); btn.disabled = true; btn.textContent = t().saving;
+      let logo;
+      try { logo = await prepareLogo("k", m?.logo_path); } catch (err) { btn.disabled = false; btn.textContent = t().submit; return fail(err.message === "type" ? t().errLogoType : t().errLogo); }
+      row.logo_path = logo.logo_path;
       const { error } = m ? await state.sb.from("makers").update(row).eq("id", m.id) : await state.sb.from("makers").insert(row);
       btn.disabled = false; btn.textContent = t().submit;
-      if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : t().errSave); }
+      if (error) { console.warn(error); if (logo.logo_path !== (m?.logo_path || null)) dropLogo(logo.logo_path); return fail(error.code === "P0001" ? error.message : t().errSave); }
+      if (logo.old && logo.old !== logo.logo_path) dropLogo(logo.old);
       await loadMakers();
       go("/account/");
       notice(t().mSaved);
@@ -779,6 +817,7 @@
       </div>
       <div class="field"><label for="s-desc">${esc(t().fDesc)}</label><textarea id="s-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().fDescHint)}</p></div>
       <div id="desc-alert"></div>
+      ${logoField("s", v.logo_path, v.name)}
       <div class="field"><label for="s-web">${esc(t().fWebsite)}</label><input id="s-web" type="url" inputmode="url" placeholder="https://" value="${esc(v.website_url)}"></div>
       <div class="row2">
         <div class="field"><label for="s-ig">${esc(t().fInstagram)}</label><input id="s-ig" type="url" inputmode="url" placeholder="https://instagram.com/…" value="${esc(v.instagram_url)}"></div>
@@ -832,10 +871,14 @@
       }
 
       if (DEMO) { done(); msg.innerHTML = `<p class="msg warn">demo: ${esc(JSON.stringify({ lat: row.lat, lng: row.lng }))}</p>`; return; }
+      let logo;
+      try { logo = await prepareLogo("s", s?.logo_path); } catch (err) { done(); return fail(err.message === "type" ? t().errLogoType : t().errLogo); }
+      row.logo_path = logo.logo_path;
       const q = s ? state.sb.from("studios").update(row).eq("id", s.id) : state.sb.from("studios").insert(row);
       const { error } = await q;
       done();
-      if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : t().errSave); }
+      if (error) { console.warn(error); if (logo.logo_path !== (s?.logo_path || null)) dropLogo(logo.logo_path); return fail(error.code === "P0001" ? error.message : t().errSave); }
+      if (logo.old && logo.old !== logo.logo_path) dropLogo(logo.old);
       await loadStudios();
       go("/account/");
       notice(t().saved);
@@ -847,7 +890,7 @@
     const st = s.status;
     const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
     return `<div class="mine-row">
-      <div class="mine-head"><strong>${esc(s.name)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      <div class="mine-head"><span class="mine-name">${logoImg(s.logo_path, s.name, "logo sm")}<strong>${esc(s.name)}</strong></span><span class="badge ${kind}">${esc(t().status[st])}</span></div>
       ${stamp(s, admin && t().typeStudio)}
       <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""} · ${(s.disciplines || []).map((d) => esc(t().disciplines[d] || d)).join(", ")}</span>
       ${s.description ? `<span class="small">${esc(s.description)}</span>` : ""}
@@ -949,7 +992,7 @@
     const st = m.status;
     const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
     return `<div class="mine-row">
-      <div class="mine-head"><strong>${esc(m.name)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      <div class="mine-head"><span class="mine-name">${logoImg(m.logo_path, m.name, "logo sm")}<strong>${esc(m.name)}</strong></span><span class="badge ${kind}">${esc(t().status[st])}</span></div>
       ${stamp(m, admin && t().typeMaker)}
       <span class="small">${esc(m.city)} · ${(m.products || []).map((p) => esc(t().products[p] || p)).join(", ")}</span>
       ${m.description ? `<span class="small">${esc(m.description)}</span>` : ""}
@@ -1007,8 +1050,10 @@
     else if (d.kreject) updateMaker(d.kreject, { status: "rejected", rejection_reason: ($("kreason-" + d.kreject)?.value || "").trim() || null });
     else if (d.kremove) {
       if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const gone = state.makers.find((x) => String(x.id) === d.kremove)?.logo_path;
       const { error } = await state.sb.from("makers").delete().eq("id", d.kremove);
       if (error) { notice(t().errSave, "bad"); return; }
+      dropLogo(gone);
       await loadMakers(); renderMine();
     }
     else if (d.lcat) { state.lfilter.cat = d.lcat; state.lfilter.kind = "all"; renderBoard(); }
@@ -1027,8 +1072,10 @@
     }
     else if (d.remove) {
       if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const gone = state.studios.find((x) => String(x.id) === d.remove)?.logo_path;
       const { error } = await state.sb.from("studios").delete().eq("id", d.remove);
       if (error) { notice(t().errSave, "bad"); return; }
+      dropLogo(gone);
       await loadStudios(); renderMine();
     }
   });
