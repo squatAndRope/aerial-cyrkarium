@@ -989,7 +989,6 @@
   $("m-q").addEventListener("input", (e) => { state.mfilter.q = e.target.value; renderMakers(); });
   $("m-custom").addEventListener("change", (e) => { state.mfilter.custom = e.target.checked; renderMakers(); });
   $("m-abroad").addEventListener("change", (e) => { state.mfilter.abroad = e.target.checked; renderMakers(); });
-  $("foot-events").href = CFG.eventsUrl;
   const setPrivacyHref = () => { $("foot-privacy").href = privacyHref(); };
   setPrivacyHref();
   // linki wewnętrzne bez przeładowania; /calendar/ i polityka ładują się normalnie

@@ -19,8 +19,8 @@ window.AC_TEXTS = {
     privacy: "Polityka prywatności",
 
     // strona główna
-    homeTitle: "Aerial w Polsce w jednym miejscu",
-    homeLede: "Wydarzenia, studia i ogłoszenia dla wszystkich, którzy trenują w powietrzu. Prowadzi Fundacja Cyrkarium.",
+    homeTitle: "Wszystko o aerialu w Polsce",
+    homeLede: "Gdzie trenować, na jakie wydarzenia jechać, u kogo kupić sprzęt i z kim stworzyć duet. Zbieramy to w jednym miejscu razem ze społecznością. Prowadzi Fundacja Cyrkarium.",
     tileCal: "Kalendarz wydarzeń",
     tileCalText: "Zawody, warsztaty, festiwale i obozy w całej Polsce.",
     tileCalCta: "Zobacz kalendarz →",
@@ -264,8 +264,8 @@ window.AC_TEXTS = {
     footer: "Aerial in Poland · Fundacja Cyrkarium",
     privacy: "Privacy policy",
 
-    homeTitle: "Aerial in Poland, all in one place",
-    homeLede: "Events, studios and a community board for everyone who trains in the air. Run by Fundacja Cyrkarium.",
+    homeTitle: "Everything aerial in Poland",
+    homeLede: "Where to train, which events to go to, who makes the gear and where to find a duo partner. Gathered in one place together with the community. Run by Fundacja Cyrkarium.",
     tileCal: "Events calendar",
     tileCalText: "Competitions, workshops, festivals and camps across Poland.",
     tileCalCta: "See the calendar →",
