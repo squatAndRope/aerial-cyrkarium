@@ -477,3 +477,13 @@ legend { font-family: var(--font-display); font-weight: 700; font-size: 17px; ma
 .cal-intro .intro-free { color: var(--muted); font-size: 13px; }
 .cal-intro .steps { max-width: none; }
 .cal-intro .steps li { color: var(--ink); border-color: var(--line); background: var(--surface); }
+
+/* ---------- 15. Panel admina: zakładki, data zgłoszenia ---------- */
+.admin-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; margin-bottom: 4px; }
+.admin-tabs::-webkit-scrollbar { display: none; }
+.admin-tabs button { padding: 10px 12px; font-weight: 700; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.admin-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.count.hot { background: var(--bad); color: var(--surface); }
+.stamp { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.admin-search { width: 100%; margin-bottom: 12px; }
+.admin-search { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; background: var(--surface); min-height: 44px; }

@@ -177,6 +177,13 @@ window.AE_TEXTS = {
     confirmReject: "Wyślij decyzję",
     needReason: "Napisz krótko powód, żeby organizator wiedział, co poprawić.",
     submitted: "Zgłoszone",
+    editedAt: "poprawione",
+    adminTabReview: "Do sprawdzenia",
+    adminTabPublished: "Opublikowane",
+    adminTabSettings: "Konto",
+    adminSearch: "Szukaj w opublikowanych (tytuł, miasto, organizator)",
+    adminPubHint: "Od ostatnio dodanych. Kliknij „Popraw”, żeby zmienić opublikowane wydarzenie.",
+    adminReviewHint: "Od najnowszego zgłoszenia. „Popraw” otwiera formularz, w którym poprawisz wydarzenie przed zatwierdzeniem.",
     decided: "Zapisane, organizator dostanie maila.",
 
     // Etykiety dla czytników ekranu
@@ -354,6 +361,13 @@ window.AE_TEXTS = {
     confirmReject: "Send decision",
     needReason: "Add a short reason so the organiser knows what to fix.",
     submitted: "Submitted",
+    editedAt: "edited",
+    adminTabReview: "To review",
+    adminTabPublished: "Published",
+    adminTabSettings: "Account",
+    adminSearch: "Search published (title, city, organiser)",
+    adminPubHint: "Most recently added first. Click “Edit” to change a published event.",
+    adminReviewHint: "Newest submission first. “Edit” opens the form so you can fix the event before approving it.",
     decided: "Saved, the organiser will get an email.",
 
     // Etykiety dla czytników ekranu

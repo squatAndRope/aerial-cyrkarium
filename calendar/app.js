@@ -945,33 +945,71 @@
     await Promise.all([loadEvents(), loadPending(), loadMine()]);
     notice("ok", t().decided);
   }
+  // znacznik „Zgłoszone … · poprawione …” na górze wiersza w panelu admina
+  function submittedStamp(e) {
+    const f = (d) => new Intl.DateTimeFormat(loc(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(d));
+    const edited = e.updated_at && e.created_at && new Date(e.updated_at) - new Date(e.created_at) > 60000;
+    return el("p", "stamp", t().submitted + " " + f(e.created_at) + (edited ? " · " + t().editedAt + " " + f(e.updated_at) : ""));
+  }
+  const newestFirst = (a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+  let adminTab = "review", adminQ = "";
+  $("admin-q").addEventListener("input", (ev) => { adminQ = ev.target.value.trim().toLowerCase(); renderAdmin(); });
+
   function renderAdmin() {
     $("tab-admin").hidden = !state.isAdmin;
     const cnt = $("pending-count"); cnt.hidden = !state.pending.length; cnt.textContent = String(state.pending.length);
     const list = $("admin-list"); list.textContent = "";
-    $("admin-published").textContent = "";
-    $("admin-intro").hidden = !state.isAdmin; $("admin-pub-h").hidden = !state.isAdmin;
+    const pub = $("admin-published"); pub.textContent = "";
+    const settings = $("admin-settings"); settings.textContent = "";
+    const tabs = $("admin-tabs"); tabs.textContent = "";
+    tabs.hidden = !state.isAdmin;
+    $("admin-intro").hidden = true; $("admin-pub-box").hidden = true; settings.hidden = true; list.hidden = false;
     if (!state.isAdmin) {
       if (!state.sb) return;
       if (!state.authReady) list.appendChild(el("p", "small", t().loading));
       else if (!state.user) list.appendChild(loginCard("loginTextAdmin"));
       return;
     }
-    if (!state.pending.length) list.appendChild(el("p", "small", t().adminEmpty));
-    state.pending.forEach((e) => {
-      const ok = btn("ok", t().approve, async () => { ok.disabled = true; await decide(e, "approved"); });
-      const { open, wrap } = decisionUI(e, t().reject);
-      const edit = btn("ghost", t().edit, () => startEdit(e));
-      const when = el("span", "small", t().submitted + " " + new Intl.DateTimeFormat(loc(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(e.created_at)));
-      list.appendChild(eventRow(e, { actions: [ok, open, edit, when], after: wrap }));
+    // zakładki: Do sprawdzenia / Opublikowane / Konto
+    [["review", t().adminTabReview, state.pending.length], ["published", t().adminTabPublished, state.events.length], ["settings", t().adminTabSettings, 0]].forEach(([k, label, n]) => {
+      const b = el("button", null, label); b.type = "button"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", String(adminTab === k));
+      if (n) { const c = el("span", "count" + (k === "review" ? " hot" : ""), String(n)); b.appendChild(document.createTextNode(" ")); b.appendChild(c); }
+      b.addEventListener("click", () => { adminTab = k; renderAdmin(); });
+      tabs.appendChild(b);
     });
-    const pub = $("admin-published"); pub.textContent = "";
-    state.events.slice().sort(byDate).forEach((e) => {
-      const { open, wrap } = decisionUI(e, t().unpublish);
-      const edit = btn("ghost", t().edit, () => startEdit(e));
-      pub.appendChild(eventRow(e, { hideRegister: true, actions: [edit, open], after: wrap }));
-    });
-    pub.appendChild(passwordSettings());
+
+    if (adminTab === "review") {
+      $("admin-intro").hidden = false;
+      $("admin-intro").textContent = t().adminIntro + " " + t().adminReviewHint;
+      if (!state.pending.length) list.appendChild(el("p", "small", t().adminEmpty));
+      state.pending.slice().sort(newestFirst).forEach((e) => {
+        const ok = btn("ok", t().approve, async () => { ok.disabled = true; await decide(e, "approved"); });
+        const { open, wrap } = decisionUI(e, t().reject);
+        const edit = btn("ghost", t().edit, () => startEdit(e));
+        const row = eventRow(e, { actions: [ok, open, edit], after: wrap });
+        row.querySelector(".ev-body").prepend(submittedStamp(e));
+        list.appendChild(row);
+      });
+    } else if (adminTab === "published") {
+      list.hidden = true;
+      $("admin-pub-box").hidden = false;
+      pub.appendChild(el("p", "small", t().adminPubHint));
+      const q = adminQ;
+      const items = state.events.filter((e) => !q || [e.title, e.city, e.organizer, e.venue].filter(Boolean).join(" ").toLowerCase().includes(q));
+      if (!items.length) pub.appendChild(el("p", "small", t().adminEmpty));
+      items.slice().sort(newestFirst).forEach((e) => {
+        const { open, wrap } = decisionUI(e, t().unpublish);
+        const edit = btn("ghost", t().edit, () => startEdit(e));
+        const row = eventRow(e, { hideRegister: true, actions: [edit, open], after: wrap });
+        row.querySelector(".ev-body").prepend(submittedStamp(e));
+        pub.appendChild(row);
+      });
+    } else {
+      list.hidden = true;
+      settings.hidden = false;
+      settings.appendChild(passwordSettings());
+    }
     setupClamps($("view-admin"));
   }
 
