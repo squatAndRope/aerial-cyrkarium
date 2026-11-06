@@ -82,15 +82,22 @@
   // adresy: /studios/real-passion-krakow, /board/sprzedam-szarfy-9m-981aa275
   // Nazwy ścieżek są po angielsku, wspólne dla wszystkich wersji językowych.
   const slugify = (x) => cityKey(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70);
-  // Dwa wpisy o tej samej nazwie w tym samym mieście (np. dwie sale jednej szkoły) dostają w adresie
-  // jeszcze ulicę, a gdy jej brak, początek id. Ta sama reguła jest w tools/sitemap.py.
-  const uniqueSlug = (list, x, base, extra) => {
-    const twins = list.filter((y) => slugify(y.name + " " + y.city) === base);
-    return twins.length > 1 ? `${base}-${slugify(extra || "") || String(x.id).slice(0, 8)}` : base;
+  // Adres profilu: nazwa + miasto. Gdy kilka ZATWIERDZONYCH wpisów (plus sam dany wpis) ma tę samą
+  // nazwę i miasto, dochodzi ulica; gdy ulicy brak albo też się powtarza, dochodzi początek id.
+  // Liczymy tylko zatwierdzone, żeby adres był taki sam dla każdego, kto patrzy (i zgodny z mapą strony).
+  // Ta sama reguła jest w tools/sitemap.py.
+  const uniqueSlug = (list, x, extraOf) => {
+    const base = slugify(x.name + " " + x.city);
+    if (!base) return String(x.id);
+    const twins = list.filter((y) => slugify(y.name + " " + y.city) === base && (y.status === "approved" || String(y.id) === String(x.id)));
+    if (twins.length < 2) return base;
+    const ex = slugify(extraOf(x) || "");
+    const clash = !ex || twins.filter((y) => slugify(extraOf(y) || "") === ex).length > 1;
+    return clash ? `${base}${ex ? "-" + ex : ""}-${String(x.id).slice(0, 8)}` : `${base}-${ex}`;
   };
-  const studioSlug = (st) => { const base = slugify(st.name + " " + st.city); return base ? uniqueSlug(state.studios, st, base, st.address) : String(st.id); };
+  const studioSlug = (st) => uniqueSlug(state.studios, st, (y) => y.address);
   const studioPath = (st) => `/studios/${studioSlug(st)}`;
-  const makerSlug = (m) => { const base = slugify(m.name + " " + m.city); return base ? uniqueSlug(state.makers, m, base, "") : String(m.id); };
+  const makerSlug = (m) => uniqueSlug(state.makers, m, () => "");
   const makerPath = (m) => `/makers/${makerSlug(m)}`;
   // stary adres bez dopisku (sprzed tej zmiany) też trafia do pierwszego z bliźniaków
   const findMaker = (key) => state.makers.find((x) => makerSlug(x) === key) || state.makers.find((x) => String(x.id) === key)
