@@ -289,7 +289,7 @@
   // ---------------- 3. Nawigacja ----------------
   // Jedna strona obsługuje wszystkie adresy (reguła w .htaccess kieruje /studios/…, /board/…
   // i /account/ do index.html). Stare polskie ścieżki (/studia/…) przekierowuje .htaccess. Linki wewnątrz przechodzą bez przeładowania (history.pushState).
-  const VIEWS = ["home", "studia", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "makers", "maker", "dodaj-producenta", "moje"];
+  const VIEWS = ["home", "studia", "ogloszenia", "ogloszenie", "dodaj-ogloszenie", "dodaj-studio", "makers", "maker", "dodaj-producenta", "moje", "admin"];
   const keep = DEMO ? "?demo=1" : "";
 
   function go(path, replace = false) {
@@ -336,11 +336,12 @@
       else if (parts[1]) { view = "maker"; id = parts[1]; }
       else view = "makers";
     } else if (parts[0] === "account") view = "moje";
+    else if (parts[0] === "admin") view = "admin";
 
     VIEWS.forEach((v) => { $("view-" + v).hidden = v !== view; });
     const tab = view.includes("ogloszeni") ? "board" : view.includes("studi") ? "studios" : view.includes("produc") || view.startsWith("maker") ? "makers" : "";
     document.querySelectorAll(".sections a").forEach((a) => a.setAttribute("aria-selected", String(a.dataset.view === tab)));
-    const titles = { home: t().brand, studia: t().tabStudios, ogloszenia: t().tabBoard, ogloszenie: t().tabBoard, "dodaj-ogloszenie": t().addListing.replace("+ ", ""), "dodaj-studio": t().addStudio.replace("+ ", ""), makers: t().tabMakers, maker: t().tabMakers, "dodaj-producenta": t().addMaker.replace("+ ", ""), moje: t().mine };
+    const titles = { home: t().brand, studia: t().tabStudios, ogloszenia: t().tabBoard, ogloszenie: t().tabBoard, "dodaj-ogloszenie": t().addListing.replace("+ ", ""), "dodaj-studio": t().addStudio.replace("+ ", ""), makers: t().tabMakers, maker: t().tabMakers, "dodaj-producenta": t().addMaker.replace("+ ", ""), moje: t().mine, admin: t().adminTitle };
     let title = titles[view];
 
     if (view === "home") renderHome();
@@ -366,6 +367,7 @@
     }
     else if (view === "dodaj-producenta") renderMakerForm(id);
     else if (view === "moje") renderMine();
+    else if (view === "admin") renderAdminLogin();
     // adres kanoniczny = bieżąca ścieżka (bez ?demo i #), żeby Google nie dublował stron
     const canon = $("canonical"); if (canon) canon.href = "https://aerial.cyrkarium.com" + location.pathname;
     document.title = view === "home" ? `${t().brand} · Fundacja Cyrkarium` : `${title} · ${t().brand}`;
@@ -1055,6 +1057,54 @@
     route();
   }
 
+  // ---------------- 7b. Ukryty panel /admin: logowanie hasłem ----------------
+  // Hasło ustawia się tutaj (po zalogowaniu linkiem) albo w kalendarzu: Do zatwierdzenia → Konto.
+  // To samo konto i ta sama sesja co w całym serwisie, więc po zalogowaniu działa też /calendar/.
+  function renderAdminLogin() {
+    const box = $("admin-box");
+    if (DEMO) { box.innerHTML = `<p class="msg warn">demo</p>`; return; }
+    if (state.user) {
+      box.innerHTML = `<div class="panel">
+        <h2>${esc(t().adminTitle)}</h2>
+        <p class="muted" style="margin:0">${esc(t().adminSignedIn(state.user.email))}${state.isAdmin ? "" : " " + esc(t().adminNotAdmin)}</p>
+        <div class="form-actions"><a class="btn primary" href="/account/">${esc(t().adminToQueue)}</a><a class="btn ghost" href="/calendar/#admin">${esc(t().adminToEvents)}</a></div>
+        <form class="login" id="pw-set-form" novalidate>
+          <h3 style="font-family:var(--font-body);font-size:16px">${esc(t().pwSetTitle)}</h3>
+          <p class="small" style="margin:0">${esc(t().pwSetText)}</p>
+          <input type="email" autocomplete="username" value="${esc(state.user.email)}" hidden>
+          <div class="login-row"><input id="pw-new" type="password" autocomplete="new-password" minlength="12" placeholder="${esc(t().pwNewPh)}"><button class="btn ghost" type="submit">${esc(t().pwSave)}</button></div>
+          <div id="pw-set-msg"></div>
+        </form>
+      </div>`;
+      $("pw-set-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = $("pw-set-msg"), pw = $("pw-new").value;
+        if (pw.length < 12) { msg.innerHTML = `<p class="msg bad">${esc(t().pwShort)}</p>`; return; }
+        const { error } = await state.sb.auth.updateUser({ password: pw });
+        msg.innerHTML = error ? `<p class="msg bad">${esc(t().pwError)}</p>` : `<p class="msg ok">${esc(t().pwSaved)}</p>`;
+        if (!error) $("pw-new").value = "";
+      });
+      return;
+    }
+    box.innerHTML = `<form class="panel" id="pw-login-form" novalidate>
+      <h2>${esc(t().adminTitle)}</h2>
+      <p class="muted" style="margin:0">${esc(t().adminLede)}</p>
+      <div class="field"><label for="pw-email">${esc(t().emailLabel)}</label><input id="pw-email" type="email" autocomplete="username"></div>
+      <div class="field"><label for="pw-pass">${esc(t().pwLabel)}</label><input id="pw-pass" type="password" autocomplete="current-password"></div>
+      <div id="pw-msg"></div>
+      <div class="form-actions"><button class="btn primary" type="submit" id="pw-go">${esc(t().login)}</button><a class="small" href="/account/">${esc(t().adminUseLink)}</a></div>
+    </form>`;
+    $("pw-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = $("pw-go"); btn.disabled = true;
+      const { error } = await state.sb.auth.signInWithPassword({ email: $("pw-email").value.trim(), password: $("pw-pass").value });
+      btn.disabled = false;
+      if (error) { $("pw-msg").innerHTML = `<p class="msg bad">${esc(t().badLogin)}</p>`; return; }
+      // onAuthStateChange wczyta dane i przerysuje stronę; potem prosto do kolejki
+      setTimeout(() => go("/account/"), 600);
+    });
+  }
+
   // ---------------- 8. Start ----------------
   document.addEventListener("click", async (e) => {
     const b = e.target.closest("button");
@@ -1119,7 +1169,7 @@
     const a = e.target.closest("a[href]");
     if (!a || a.target || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const url = new URL(a.href, location.href);
-    if (url.origin !== location.origin || !/^\/(studios|board|makers|account)?(\/|$)/.test(url.pathname) || url.hash) return;
+    if (url.origin !== location.origin || !/^\/(studios|board|makers|account|admin)?(\/|$)/.test(url.pathname) || url.hash) return;
     e.preventDefault();
     go(url.pathname);
   });

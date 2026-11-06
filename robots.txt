@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /account/
+Disallow: /admin
 Disallow: /studios/add/
 Disallow: /studios/edit/
 Disallow: /board/add/

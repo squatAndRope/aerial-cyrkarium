@@ -23,4 +23,4 @@ RedirectMatch 301 ^/moje(/.*)?$ /account/
 # która czyta adres i pokazuje właściwy widok. /calendar/ to prawdziwy folder.
 # Nazwy ścieżek są po angielsku i wspólne dla wszystkich wersji językowych.
 RewriteEngine On
-RewriteRule ^(studios|board|makers|account)(/.*)?$ /index.html [L]
+RewriteRule ^(studios|board|makers|account|admin)(/.*)?$ /index.html [L]
