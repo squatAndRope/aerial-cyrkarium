@@ -82,13 +82,23 @@
   // adresy: /studios/real-passion-krakow, /board/sprzedam-szarfy-9m-981aa275
   // Nazwy ścieżek są po angielsku, wspólne dla wszystkich wersji językowych.
   const slugify = (x) => cityKey(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70);
-  const studioSlug = (st) => slugify(st.name + " " + st.city) || String(st.id);
+  // Dwa wpisy o tej samej nazwie w tym samym mieście (np. dwie sale jednej szkoły) dostają w adresie
+  // jeszcze ulicę, a gdy jej brak, początek id. Ta sama reguła jest w tools/sitemap.py.
+  const uniqueSlug = (list, x, base, extra) => {
+    const twins = list.filter((y) => slugify(y.name + " " + y.city) === base);
+    return twins.length > 1 ? `${base}-${slugify(extra || "") || String(x.id).slice(0, 8)}` : base;
+  };
+  const studioSlug = (st) => { const base = slugify(st.name + " " + st.city); return base ? uniqueSlug(state.studios, st, base, st.address) : String(st.id); };
   const studioPath = (st) => `/studios/${studioSlug(st)}`;
-  const makerPath = (m) => `/makers/${slugify(m.name + " " + m.city) || m.id}`;
-  const findMaker = (key) => state.makers.find((x) => slugify(x.name + " " + x.city) === key) || state.makers.find((x) => String(x.id) === key);
+  const makerSlug = (m) => { const base = slugify(m.name + " " + m.city); return base ? uniqueSlug(state.makers, m, base, "") : String(m.id); };
+  const makerPath = (m) => `/makers/${makerSlug(m)}`;
+  // stary adres bez dopisku (sprzed tej zmiany) też trafia do pierwszego z bliźniaków
+  const findMaker = (key) => state.makers.find((x) => makerSlug(x) === key) || state.makers.find((x) => String(x.id) === key)
+    || state.makers.find((x) => slugify(x.name + " " + x.city) === key);
   const listingPath = (l) => `/board/${slugify(l.title).slice(0, 60)}-${String(l.id).slice(0, 8)}`;
   // szukanie po ładnym adresie albo po samym id (stare linki z # i linki z maili)
-  const findStudio = (key) => state.studios.find((x) => studioSlug(x) === key) || state.studios.find((x) => String(x.id) === key);
+  const findStudio = (key) => state.studios.find((x) => studioSlug(x) === key) || state.studios.find((x) => String(x.id) === key)
+    || state.studios.find((x) => slugify(x.name + " " + x.city) === key);
   const findListing = (key) => state.listings.find((x) => String(x.id) === key)
     || state.listings.find((x) => String(x.id).startsWith(String(key).split("-").pop()));
 

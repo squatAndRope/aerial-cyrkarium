@@ -328,3 +328,6 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .logo-letter { display: inline-grid; place-items: center; background: var(--lilac); color: var(--violet); border-color: transparent; font-family: var(--font-display); font-weight: 500; font-size: 18px; line-height: 1; }
 .logo-letter.sm { font-size: 14px; }
 .logo-letter.big { font-size: 28px; }
+
+/* ---------- 18. Opisy z nowymi liniami (listy, akapity wpisane w formularzu) ---------- */
+.profile > div > p { white-space: pre-line; }
