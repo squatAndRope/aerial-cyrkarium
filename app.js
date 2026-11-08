@@ -134,6 +134,19 @@
   // wykrywanie telefonów i e-maili w tekście (polityka: kontakt tylko przez linki i formularz).
   // Telefon = ciąg cyfr, spacji i myślników z co najmniej 9 cyframi. Ta sama reguła
   // jest w bazie (public.has_contact w 14_listings.sql), więc daty i ceny przechodzą.
+  // linki do Instagrama i Facebooka bez dopisków śledzących z aplikacji (?igsh=, ?mibextid=, ?rpxt= …);
+  // zostaje tylko ?id= przy profile.php, bo bez niego link nie działa
+  function cleanSocial(u) {
+    if (!u) return null;
+    try {
+      const url = new URL(u);
+      if (!/(^|\.)(instagram|facebook)\.com$/i.test(url.hostname)) return u;
+      const id = url.pathname.endsWith("profile.php") ? url.searchParams.get("id") : null;
+      url.search = id ? `?id=${id}` : ""; url.hash = "";
+      return url.toString();
+    } catch { return u; }
+  }
+
   function contactInText(text) {
     const s = text || "";
     const phone = (s.match(/\+?\d[\d -]{7,}\d/g) || []).some((m) => m.replace(/\D/g, "").length >= 9);
@@ -156,6 +169,8 @@
     stats: {},          // liczba wiadomości przy moich ogłoszeniach
     lfilter: { cat: "all", kind: "all", q: "" },
     listingsLoaded: false,
+    emailIds: new Set(),  // zatwierdzone studia z publicznym e-mailem (sam adres dopiero po „Pokaż e-mail”)
+    emails: {},           // e-maile studiów, które ta osoba może edytować (autor lub admin): { id: e-mail }
     makers: [],         // producenci, które baza pozwala przeczytać tej osobie
     makersLoaded: false,
     mfilter: { prod: "all", q: "", custom: false, abroad: false },
@@ -229,6 +244,13 @@
     if (error) { console.warn("studios:", error.message); state.loadFailed = true; state.studios = []; return; }
     state.loadFailed = false;
     state.studios = data || [];
+    const ids = await state.sb.rpc("studio_email_ids");
+    state.emailIds = new Set((ids.data || []).map(String));
+    state.emails = {};
+    if (state.user) {
+      const own = await state.sb.from("studio_emails").select("studio_id,email");
+      (own.data || []).forEach((r) => { state.emails[r.studio_id] = r.email; });
+    }
   }
 
   async function loadListings() {
@@ -501,6 +523,7 @@
         ${s.description ? `<p>${esc(s.description)}</p>` : ""}
         <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
+        ${state.emailIds.has(String(s.id)) ? `<div class="links" id="mail-${esc(s.id)}"><button type="button" class="btn ghost" data-showmail="${esc(s.id)}">${esc(t().showEmail)}</button></div>` : ""}
         <p class="small">${esc(t().noContactNote)}</p>
         ${s.source_name && safeUrl(s.source_url) ? `<p class="small">${esc(t().sourceLabel)} <a href="${esc(s.source_url)}" target="_blank" rel="noopener">${esc(s.source_name)} ↗</a></p>` : ""}
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
@@ -861,6 +884,8 @@
         <div class="field"><label for="s-fb">${esc(t().fFacebook)}</label><input id="s-fb" type="url" inputmode="url" placeholder="https://facebook.com/…" value="${esc(v.facebook_url)}"></div>
       </div>
       <p class="hint req" style="margin:0">${esc(t().fLinksHint)}</p>
+      <div class="field"><label for="s-email">${esc(t().fEmail)}</label><input id="s-email" type="email" maxlength="120" autocomplete="off" value="${esc(s ? state.emails[s.id] || "" : "")}"><p class="hint">${esc(t().fEmailHint)}</p>
+        <label class="toggle"><input type="checkbox" id="s-email-ok"${s && state.emails[s.id] ? " checked" : ""}> <span class="small">${esc(t().fEmailConsent)}</span></label></div>
       <label class="toggle"><input type="checkbox" id="s-consent"${s ? " checked" : ""}> <span class="small req">${esc(t().fConsent)}</span></label>
       <div id="form-msg"></div>
       <div class="form-actions"><button type="submit" class="btn primary" id="s-submit">${esc(t().submit)}</button><a class="btn ghost" href="${s ? "/account/" : "/studios/"}">${esc(t().cancel)}</a></div>
@@ -870,7 +895,7 @@
     const checkDesc = () => {
       const found = contactInText(desc.value);
       desc.classList.toggle("err", found.length > 0);
-      $("desc-alert").innerHTML = found.length ? `<p class="msg bad" role="alert">${esc(t().errContact(found.join(t().and)))}</p>` : "";
+      $("desc-alert").innerHTML = found.length ? `<p class="msg bad" role="alert">${esc(t().errContactStudio(found.join(t().and)))}</p>` : "";
       return found.length === 0;
     };
     desc.addEventListener("input", checkDesc);
@@ -885,13 +910,18 @@
         disciplines: picked("disc"), levels: picked("lvl"), kids: $("s-kids").checked,
         open_training: $("s-open").checked, rental: $("s-rental").checked,
         description: val("s-desc") || null,
-        website_url: val("s-web") || null, instagram_url: val("s-ig") || null, facebook_url: val("s-fb") || null,
+        website_url: val("s-web") || null, instagram_url: cleanSocial(val("s-ig")), facebook_url: cleanSocial(val("s-fb")),
       };
       const urls = [row.website_url, row.instagram_url, row.facebook_url].filter(Boolean);
       const fail = (text) => { msg.innerHTML = `<p class="msg bad" role="alert">${esc(text)}</p>`; };
       if (row.name.length < 2 || row.city.length < 2 || !row.disciplines.length || !urls.length) return fail(t().errRequired);
       if (urls.some((u) => !/^https:\/\/[^\s.]+\.[^\s]+$/i.test(u))) return fail(t().errUrl);
-      if (!checkDesc()) return fail(t().errContact(contactInText(row.description).join(t().and)));
+      if (!checkDesc()) return fail(t().errContactStudio(contactInText(row.description).join(t().and)));
+      const inAddress = contactInText((row.address || "") + " " + row.name);
+      if (inAddress.length) return fail(t().errContactStudio(inAddress.join(t().and)));
+      const email = val("s-email");
+      if (email && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return fail(t().errEmail);
+      if (email && !$("s-email-ok").checked) return fail(t().errEmailConsent);
       if (!$("s-consent").checked) return fail(t().errConsent);
 
       const btn = $("s-submit");
@@ -911,10 +941,19 @@
       let logo;
       try { logo = await prepareLogo("s", s?.logo_path); } catch (err) { done(); return fail(err.message === "type" ? t().errLogoType : t().errLogo); }
       row.logo_path = logo.logo_path;
-      const q = s ? state.sb.from("studios").update(row).eq("id", s.id) : state.sb.from("studios").insert(row);
-      const { error } = await q;
+      const q = s ? state.sb.from("studios").update(row).eq("id", s.id).select("id").single() : state.sb.from("studios").insert(row).select("id").single();
+      const { data: savedRow, error } = await q;
+      if (error) { done(); console.warn(error); if (logo.logo_path !== (s?.logo_path || null)) dropLogo(logo.logo_path); return fail(error.code === "P0001" ? error.message : error.code === "23514" ? t().errContactDb : t().errSave); }
+      // e-mail kontaktowy: osobna tabela, zapis tylko z zaznaczoną zgodą; puste pole usuwa adres
+      const sid = savedRow?.id || s?.id;
+      const prev = s ? state.emails[s.id] || "" : "";
+      if (sid && email !== prev) {
+        const r = email
+          ? await state.sb.from("studio_emails").upsert({ studio_id: sid, email, consent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          : await state.sb.from("studio_emails").delete().eq("studio_id", sid);
+        if (r.error) { done(); console.warn(r.error); return fail(t().errEmailSave); }
+      }
       done();
-      if (error) { console.warn(error); if (logo.logo_path !== (s?.logo_path || null)) dropLogo(logo.logo_path); return fail(error.code === "P0001" ? error.message : t().errSave); }
       if (logo.old && logo.old !== logo.logo_path) dropLogo(logo.old);
       await loadStudios();
       go("/account/");
@@ -931,6 +970,7 @@
       ${stamp(s, admin && t().typeStudio)}
       <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""} · ${(s.disciplines || []).map((d) => esc(t().disciplines[d] || d)).join(", ")}</span>
       ${s.description ? `<span class="small">${esc(s.description)}</span>` : ""}
+      ${state.emails[s.id] ? `<span class="small">${esc(t().mineEmail(state.emails[s.id]))}</span>` : ""}
       ${[s.website_url, s.instagram_url, s.facebook_url].filter(safeUrl).map((u) => `<a class="small" href="${esc(u)}" target="_blank" rel="noopener nofollow">${esc(u)}</a>`).join("")}
       ${st === "rejected" && s.rejection_reason ? `<p class="msg bad">${esc(s.rejection_reason)}</p>` : ""}
       <div class="form-actions">
@@ -1126,6 +1166,11 @@
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
+    else if (d.showmail) {
+      const { data } = await state.sb.rpc("studio_email", { sid: d.showmail });
+      const box = $("mail-" + d.showmail);
+      if (box && data) box.innerHTML = `<a class="btn ghost" href="mailto:${esc(data)}">${esc(data)}</a>`;
+    }
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
     else if (d.unsource) updateStudio(d.unsource, { source_name: null, source_url: null });
     else if (d.approve) updateStudio(d.approve, { status: "approved" });
