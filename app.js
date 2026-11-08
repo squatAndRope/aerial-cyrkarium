@@ -886,6 +886,7 @@
       <p class="hint req" style="margin:0">${esc(t().fLinksHint)}</p>
       <div class="field"><label for="s-email">${esc(t().fEmail)}</label><input id="s-email" type="email" maxlength="120" autocomplete="off" value="${esc(s ? state.emails[s.id] || "" : "")}"><p class="hint">${esc(t().fEmailHint)}</p>
         <label class="toggle"><input type="checkbox" id="s-email-ok"${s && state.emails[s.id] ? " checked" : ""}> <span class="small">${esc(t().fEmailConsent)}</span></label></div>
+      <label class="toggle"><input type="checkbox" id="s-owner"${v.submitted_by_owner ? " checked" : ""}> <span class="small">${esc(t().fOwner)} <span class="muted">${esc(t().fOwnerHint)}</span></span></label>
       <label class="toggle"><input type="checkbox" id="s-consent"${s ? " checked" : ""}> <span class="small req">${esc(t().fConsent)}</span></label>
       <div id="form-msg"></div>
       <div class="form-actions"><button type="submit" class="btn primary" id="s-submit">${esc(t().submit)}</button><a class="btn ghost" href="${s ? "/account/" : "/studios/"}">${esc(t().cancel)}</a></div>
@@ -908,7 +909,7 @@
       const row = {
         name: val("s-name"), city: val("s-city"), address: val("s-address") || null,
         disciplines: picked("disc"), levels: picked("lvl"), kids: $("s-kids").checked,
-        open_training: $("s-open").checked, rental: $("s-rental").checked,
+        open_training: $("s-open").checked, rental: $("s-rental").checked, submitted_by_owner: $("s-owner").checked,
         description: val("s-desc") || null,
         website_url: val("s-web") || null, instagram_url: cleanSocial(val("s-ig")), facebook_url: cleanSocial(val("s-fb")),
       };
@@ -967,6 +968,7 @@
     const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
     return `<div class="mine-row">
       <div class="mine-head"><span class="mine-name">${logoImg(s.logo_path, s.name, "logo sm")}<strong>${esc(s.name)}</strong></span><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      ${s.submitted_by_owner ? `<span class="badge ok" style="align-self:flex-start">${esc(t().ownerTag)}</span>` : ""}
       ${stamp(s, admin && t().typeStudio)}
       <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""} · ${(s.disciplines || []).map((d) => esc(t().disciplines[d] || d)).join(", ")}</span>
       ${s.description ? `<span class="small">${esc(s.description)}</span>` : ""}
@@ -1173,7 +1175,11 @@
     }
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
     else if (d.unsource) updateStudio(d.unsource, { source_name: null, source_url: null });
-    else if (d.approve) updateStudio(d.approve, { status: "approved" });
+    else if (d.approve) {
+      // zgłoszenie od właściciela studia: po zatwierdzeniu od razu „Profil potwierdzony przez studio”
+      const s = state.studios.find((x) => String(x.id) === d.approve);
+      updateStudio(d.approve, s?.submitted_by_owner ? { status: "approved", verified: true } : { status: "approved" });
+    }
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
     else if (d.mtab) { state.mineTab = d.mtab; renderMine(); }
     else if (d.prod) { state.mfilter.prod = d.prod; renderMakers(); }
