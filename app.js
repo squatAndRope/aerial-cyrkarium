@@ -95,9 +95,18 @@
     const clash = !ex || twins.filter((y) => slugify(extraOf(y) || "") === ex).length > 1;
     return clash ? `${base}${ex ? "-" + ex : ""}-${String(x.id).slice(0, 8)}` : `${base}-${ex}`;
   };
-  const studioSlug = (st) => uniqueSlug(state.studios, st, (y) => y.address);
+  // Wynik zapamiętany dla danej listy (nowa lista po każdym wczytaniu z bazy), żeby lista i mapa nie liczyły
+  // tego samego przy każdym przerysowaniu.
+  const memoSlug = (extraOf) => { let ref = null, m = new Map(); return (list, x) => {
+    if (ref !== list) { ref = list; m = new Map(); }
+    const k = String(x.id);
+    if (!m.has(k)) m.set(k, uniqueSlug(list, x, extraOf));
+    return m.get(k);
+  }; };
+  const studioSlugOf = memoSlug((y) => y.address), makerSlugOf = memoSlug(() => "");
+  const studioSlug = (st) => studioSlugOf(state.studios, st);
   const studioPath = (st) => `/studios/${studioSlug(st)}`;
-  const makerSlug = (m) => uniqueSlug(state.makers, m, () => "");
+  const makerSlug = (m) => makerSlugOf(state.makers, m);
   const makerPath = (m) => `/makers/${makerSlug(m)}`;
   // stary adres bez dopisku (sprzed tej zmiany) też trafia do pierwszego z bliźniaków
   const findMaker = (key) => state.makers.find((x) => makerSlug(x) === key) || state.makers.find((x) => String(x.id) === key)
@@ -137,6 +146,7 @@
   // ---------------- 2. Baza, logowanie, dane ----------------
   const state = {
     sb: null, user: null, isAdmin: false,
+    authSync: Promise.resolve(),   // trwające wczytywanie po zmianie logowania (uprawnienia + dane)
     studios: [],        // wszystko, co baza pozwala przeczytać tej osobie
     events: [],         // nadchodzące, zatwierdzone wydarzenia z Aerial Events
     loaded: false, loadFailed: false,
@@ -198,7 +208,7 @@
     await setUser(data.session?.user || null);
     state.sb.auth.onAuthStateChange((_e, session) => {
       const u = session?.user || null;
-      if ((u?.id || null) !== (state.user?.id || null)) setUser(u).then(() => Promise.all([loadStudios(), loadListings(), loadMakers()]).then(route));
+      if ((u?.id || null) !== (state.user?.id || null)) state.authSync = setUser(u).then(() => Promise.all([loadStudios(), loadListings(), loadMakers()])).then(route);
     });
   }
 
@@ -494,7 +504,7 @@
         <p class="small">${esc(t().noContactNote)}</p>
         ${s.source_name && safeUrl(s.source_url) ? `<p class="small">${esc(t().sourceLabel)} <a href="${esc(s.source_url)}" target="_blank" rel="noopener">${esc(s.source_name)} ↗</a></p>` : ""}
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
-        ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a></div>` : ""}
+        ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>${s.source_name ? `<button type="button" class="btn ghost" data-unsource="${esc(s.id)}">${esc(t().removeSource)}</button>` : ""}</div>` : ""}
       </div>
       <div>
         <div class="linked"><h3>${esc(t().eventsHere(s.city))}</h3>
@@ -1082,7 +1092,7 @@
         const msg = $("pw-set-msg"), pw = $("pw-new").value;
         if (pw.length < 12) { msg.innerHTML = `<p class="msg bad">${esc(t().pwShort)}</p>`; return; }
         const { error } = await state.sb.auth.updateUser({ password: pw });
-        msg.innerHTML = error ? `<p class="msg bad">${esc(t().pwError)}</p>` : `<p class="msg ok">${esc(t().pwSaved)}</p>`;
+        msg.innerHTML = error ? `<p class="msg bad">${esc(t().pwError)}${error.message ? ` (${esc(error.message)})` : ""}</p>` : `<p class="msg ok">${esc(t().pwSaved)}</p>`;
         if (!error) $("pw-new").value = "";
       });
       return;
@@ -1098,11 +1108,12 @@
     $("pw-login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = $("pw-go"); btn.disabled = true;
-      const { error } = await state.sb.auth.signInWithPassword({ email: $("pw-email").value.trim(), password: $("pw-pass").value });
-      btn.disabled = false;
-      if (error) { $("pw-msg").innerHTML = `<p class="msg bad">${esc(t().badLogin)}</p>`; return; }
-      // onAuthStateChange wczyta dane i przerysuje stronę; potem prosto do kolejki
-      setTimeout(() => go("/account/"), 600);
+      const { data, error } = await state.sb.auth.signInWithPassword({ email: $("pw-email").value.trim(), password: $("pw-pass").value });
+      if (error) { btn.disabled = false; $("pw-msg").innerHTML = `<p class="msg bad">${esc(t().badLogin)}</p>`; return; }
+      // czekamy, aż uprawnienia admina i dane będą wczytane (zwykle robi to już onAuthStateChange), potem do kolejki
+      if (state.user?.id !== data.user?.id) state.authSync = setUser(data.user).then(() => Promise.all([loadStudios(), loadListings(), loadMakers()]));
+      await state.authSync;
+      go("/account/");
     });
   }
 
@@ -1111,11 +1122,12 @@
     const b = e.target.closest("button");
     if (!b) return;
     const d = b.dataset;
-    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
+    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
     else if (d.verify) { const s = state.studios.find((x) => String(x.id) === d.verify); if (s) updateStudio(s.id, { verified: !s.verified }); }
+    else if (d.unsource) updateStudio(d.unsource, { source_name: null, source_url: null });
     else if (d.approve) updateStudio(d.approve, { status: "approved" });
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
     else if (d.mtab) { state.mineTab = d.mtab; renderMine(); }

@@ -30,6 +30,8 @@ urls = [(f"{SITE}/", today, "1.0"), (f"{SITE}/calendar/", today, "0.9"), (f"{SIT
 # nazwa + miasto; przy bliźniakach dochodzi ulica, a gdy ulicy brak albo się powtarza, początek id.
 def unique(rows, x, extra_of):
     base = slugify(x["name"] + " " + x["city"])
+    if not base:  # jak w app.js: nazwa bez liter łacińskich → adres po id
+        return str(x["id"])
     twins = [y for y in rows if slugify(y["name"] + " " + y["city"]) == base]
     if len(twins) < 2:
         return base

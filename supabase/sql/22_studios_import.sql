@@ -11,8 +11,10 @@
 -- Wpisy są od razu zatwierdzone, z oznaczeniem „Dodane przez społeczność”
 -- i źródłem w profilu. Studio może przejąć i poprawić swój profil.
 --
--- Uruchom w SQL Editorze PO 21_studio_source.sql. Ponowne uruchomienie
--- nie zdubluje wpisów (sprawdza nazwę, miasto i adres).
+-- Uruchom w SQL Editorze PO 21_studio_source.sql.
+-- WYKONANE 8.11.2026. Nie uruchamiaj ponownie: 23_studios_fixes.sql usunął
+-- i poprawił część wpisów, więc powtórka by je przywróciła. Dlatego skrypt
+-- sam nic nie doda, jeśli import z tego dnia już jest w bazie.
 -- =====================================================================
 
 with admin as (
@@ -91,6 +93,10 @@ select a.id, 'approved', false, r.name, r.city, r.address, r.lat, r.lng, r.disci
        'mapa Taniec w Powietrzu', 'https://taniecwpowietrzu.pl/mapa-aerial-polska,p18.html'
 from rows r cross join admin a
 where not exists (
+  select 1 from public.studios s
+  where s.source_name = 'mapa Taniec w Powietrzu' and s.created_at >= '2026-11-08'
+)
+and not exists (
   select 1 from public.studios s
   where lower(s.name) = lower(r.name) and lower(s.city) = lower(r.city)
     and coalesce(lower(s.address), '') = coalesce(lower(r.address), '')
