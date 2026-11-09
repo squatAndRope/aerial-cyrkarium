@@ -362,3 +362,10 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .city-links .chip { text-decoration: none; color: inherit; display: inline-flex; gap: 6px; align-items: center; }
 .city-links .chip[aria-current="true"] { background: var(--plum); border-color: var(--plum); color: #FFFFFF; }
 .city-links .chip[aria-current="true"] .muted { color: inherit; opacity: .8; }
+
+/* „Zgłoś nieaktualne dane” w profilu */
+.report { margin-top: 4px; }
+.report summary { cursor: pointer; font-size: 13px; color: var(--muted); text-decoration: underline; width: fit-content; }
+.report-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.report-form textarea, .report-form input[type="email"] { width: 100%; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

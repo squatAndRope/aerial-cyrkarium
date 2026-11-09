@@ -249,6 +249,7 @@
   async function setUser(u) {
     state.user = u;
     state.isAdmin = false;
+    state.reports = null;
     if (u && state.sb) {
       const { data } = await state.sb.rpc("is_admin");
       state.isAdmin = data === true;
@@ -291,6 +292,65 @@
     state.makersLoaded = true;
     if (error) { console.warn("makers:", error.message); state.makers = []; return; }
     state.makers = data || [];
+  }
+
+  // ---------------- zgłoszenia nieaktualnych danych ----------------
+  const REPORT_REASONS = ["closed", "address", "links", "classes", "other"];
+  function reportForm(kind, id) {
+    return `<details class="report"><summary>${esc(t().reportLink)}</summary>
+      <form class="report-form" data-rkind="${kind}" data-rid="${esc(id)}" novalidate>
+        <p class="small" style="margin:0">${esc(t().reportLede)}</p>
+        <div class="checks">${REPORT_REASONS.map((r) => `<label><input type="checkbox" name="rr" value="${r}"> ${esc(t().reportReasons[r])}</label>`).join("")}</div>
+        <div class="field"><textarea name="rmsg" maxlength="1000" rows="3" placeholder="${esc(t().reportMsgPh)}" aria-label="${esc(t().reportMsgPh)}"></textarea></div>
+        <div class="field"><input name="remail" type="email" maxlength="200" autocomplete="email" placeholder="${esc(t().reportEmailPh)}" aria-label="${esc(t().reportEmailPh)}"></div>
+        <input name="website" type="text" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+        <div class="rmsg-out"></div>
+        <button type="submit" class="btn ghost">${esc(t().reportSend)}</button>
+        <p class="small" style="margin:0">${esc(t().reportPrivacy)}${privacyLink()}</p>
+      </form></details>`;
+  }
+  async function loadReports() {
+    if (DEMO || !state.isAdmin) { state.reports = []; return; }
+    const { data, error } = await state.sb.from("entry_reports").select("*").is("resolved_at", null).order("created_at", { ascending: false });
+    if (error) { console.warn("reports:", error.message); state.reports = []; return; }
+    state.reports = data || [];
+  }
+  document.addEventListener("submit", async (e) => {
+    const f = e.target.closest(".report-form"); if (!f) return;
+    e.preventDefault();
+    const out = f.querySelector(".rmsg-out");
+    const say = (k, m) => { out.innerHTML = `<p class="msg ${k}" role="alert">${esc(m)}</p>`; };
+    if (f.website.value) return say("ok", t().reportThanks); // pułapka na boty
+    const reasons = [...f.querySelectorAll('input[name="rr"]:checked')].map((i) => i.value);
+    const message = f.rmsg.value.trim() || null, email = f.remail.value.trim() || null;
+    if (!reasons.length && (message || "").length < 5) return say("bad", t().reportErrEmpty);
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say("bad", t().reportErrEmail);
+    if (DEMO) return say("ok", t().reportThanks + " (demo)");
+    const row = { reasons, message, email, lang, [f.dataset.rkind === "maker" ? "maker_id" : "studio_id"]: f.dataset.rid };
+    const btn = f.querySelector('button[type="submit"]'); btn.disabled = true;
+    const { error } = await state.sb.from("entry_reports").insert(row);
+    btn.disabled = false;
+    if (error) { console.warn(error); return say("bad", error.message === "too_many" ? t().reportErrMany : t().errSave); }
+    f.querySelectorAll("input, textarea").forEach((i) => { if (i.type === "checkbox") i.checked = false; else i.value = ""; });
+    say("ok", t().reportThanks);
+    countClick("zgloszenie/" + f.dataset.rkind, "Zgłoś nieaktualne dane");
+  });
+  function reportRow(r) {
+    const s = r.studio_id ? state.studios.find((x) => String(x.id) === String(r.studio_id)) : null;
+    const m = r.maker_id ? state.makers.find((x) => String(x.id) === String(r.maker_id)) : null;
+    const name = s ? s.name : m ? m.name : "?";
+    const path = s ? studioPath(s) : m ? makerPath(m) : "#";
+    const edit = s ? `/studios/edit/${s.id}` : m ? `/makers/edit/${m.id}` : "#";
+    return `<div class="mine-row">
+      <div class="mine-head"><strong>${esc(name)}</strong><span class="type-badge">${esc(s ? t().typeStudio : t().typeMaker)}</span></div>
+      <span class="small">${esc(new Date(r.created_at).toLocaleString(t().locale, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}</span>
+      ${r.reasons?.length ? `<div class="tags">${r.reasons.map((x) => `<span class="tag">${esc(t().reportReasons[x] || x)}</span>`).join("")}</div>` : ""}
+      ${r.message ? `<span class="small">${esc(r.message)}</span>` : ""}
+      ${r.email ? `<span class="small">${esc(t().reportFrom)} <a href="mailto:${esc(r.email)}">${esc(r.email)}</a></span>` : ""}
+      <div class="form-actions"><a class="btn ghost" href="${esc(path)}">${esc(t().show)}</a><a class="btn ghost" href="${esc(edit)}">${esc(t().edit)}</a>
+        <button type="button" class="btn ok" data-rdone="${esc(r.id)}">${esc(t().reportDone)}</button>
+        <button type="button" class="btn bad" data-rdel="${esc(r.id)}">${esc(t().remove)}</button></div>
+    </div>`;
   }
 
   async function loadEvents() {
@@ -593,6 +653,7 @@
         <p class="small">${esc(t().noContactNote)}</p>
         ${s.source_name && safeUrl(s.source_url) ? `<p class="small">${esc(t().sourceLabel)} <a href="${esc(s.source_url)}" target="_blank" rel="noopener">${esc(s.source_name)} ↗</a></p>` : ""}
         ${claim}
+        ${s.status === "approved" ? reportForm("studio", s.id) : ""}
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
         ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>${s.source_name ? `<button type="button" class="btn ghost" data-unsource="${esc(s.id)}">${esc(t().removeSource)}</button>` : ""}</div>` : ""}
       </div>
@@ -875,6 +936,7 @@
         ${state.isAdmin && m.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-kverify="${esc(m.id)}">${esc(m.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a></div>` : ""}
       </div>
       <div>
+        ${m.status === "approved" ? reportForm("maker", m.id) : ""}
         ${m.verified ? "" : `<div class="empty"><strong>${esc(t().makerClaimTitle)}</strong><p class="small">${esc(t().makerClaimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
       </div>
     </section></div>`;
@@ -1151,6 +1213,7 @@
 
   function renderMine() {
     sweepPhotos();
+    if (state.isAdmin && state.reports == null && !state.reportsLoading) { state.reportsLoading = true; loadReports().then(() => { state.reportsLoading = false; if (!$("view-moje").hidden) renderMine(); }); }
     const box = $("mine-box");
     box.innerHTML = "";
     if (!state.user) { box.appendChild(loginPanel(t().login)); return; }
@@ -1174,7 +1237,7 @@
     ].sort((a, b) => newest(a.x, b.x));
 
     const tabs = [
-      ...(state.isAdmin ? [["review", t().tabReview, queue.length], ["published", t().tabPublished, published.length]] : []),
+      ...(state.isAdmin ? [["review", t().tabReview, queue.length], ["reports", t().tabReports, (state.reports || []).length], ["published", t().tabPublished, published.length]] : []),
       ["listings", t().mineListings, mine.listings.length],
       ["studios", t().mineStudios, mine.studios.length],
       ["makers", t().mineMakers, mine.makers.length],
@@ -1184,6 +1247,7 @@
 
     let body = "";
     if (tab === "review") body = queue.length ? `<p class="small">${esc(t().reviewHint)}</p>` + queue.map((q) => q.html()).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`;
+    else if (tab === "reports") body = state.reports == null ? `<p class="muted">…</p>` : state.reports.length ? `<p class="small">${esc(t().reportsHint)}</p>` + state.reports.map(reportRow).join("") : `<p class="muted">${esc(t().reportsEmpty)}</p>`;
     else if (tab === "published") body = published.length ? published.map((q) => `<div class="mine-row pub-row">
         <div class="mine-head"><strong>${esc(q.title)}</strong><span class="type-badge">${esc(q.type)}</span></div>
         ${stamp(q.x)}
@@ -1301,7 +1365,7 @@
     const b = e.target.closest("button");
     if (!b) return;
     const d = b.dataset;
-    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
+    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.rdone || d.rdel || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.gphoto) {
       $("g-main").src = photoUrl(d.gphoto); $("g-main-link").href = photoUrl(d.gphoto);
@@ -1331,6 +1395,14 @@
     }
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
     else if (d.mtab) { state.mineTab = d.mtab; renderMine(); }
+    else if (d.rdone || d.rdel) {
+      if (d.rdel && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const id = d.rdone || d.rdel;
+      const q = d.rdone ? state.sb.from("entry_reports").update({ resolved_at: new Date().toISOString() }).eq("id", id) : state.sb.from("entry_reports").delete().eq("id", id);
+      const { error } = await q;
+      if (error) { notice(t().errSave, "bad"); return; }
+      await loadReports(); renderMine();
+    }
     else if (d.prod) { state.mfilter.prod = d.prod; renderMakers(); }
     else if (d.kverify) { const m = state.makers.find((x) => String(x.id) === d.kverify); if (m) updateMaker(m.id, { verified: !m.verified }); }
     else if (d.kapprove) updateMaker(d.kapprove, { status: "approved" });
