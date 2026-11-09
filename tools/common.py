@@ -8,9 +8,9 @@ URL = re.search(r'supabaseUrl:\s*"([^"]+)"', _cfg).group(1)
 KEY = re.search(r'supabaseAnonKey:\s*"([^"]+)"', _cfg).group(1)
 
 
-def get(table, cols):
+def get(table, cols, order="name"):
     """Zatwierdzone wpisy z bazy, publicznym kluczem (tak jak widzi je strona)."""
-    req = urllib.request.Request(f"{URL}/rest/v1/{table}?select={cols}&status=eq.approved&order=name",
+    req = urllib.request.Request(f"{URL}/rest/v1/{table}?select={cols}&status=eq.approved&order={order}",
                                  headers={"apikey": KEY})
     return json.load(urllib.request.urlopen(req))
 

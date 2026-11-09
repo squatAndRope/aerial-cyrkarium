@@ -363,6 +363,35 @@
     return hit ? hit.id : null;
   }
 
+  // link do jednego wydarzenia: /calendar/?e=<tytuł>-<początek id>; gotowa strona z podglądem (p/events/…) podaje .htaccess
+  const slugify = (x) => cityKey(x).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50).replace(/-+$/, "");
+  const eventParam = (e) => [slugify(e.title || ""), String(e.id).slice(0, 8)].filter(Boolean).join("-");
+  const eventUrl = (e) => "https://aerial.cyrkarium.com/calendar/?e=" + eventParam(e);
+  function shareButton(e) {
+    const b = btn("ghost share", t().share + " ↗");
+    b.addEventListener("click", async () => {
+      const url = eventUrl(e);
+      if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "udostepnij/" + e.id, title: e.title || "", event: true });
+      // telefon: systemowe „Udostępnij” (Messenger, WhatsApp…); komputer: kopiowanie linku
+      if (navigator.share) { try { await navigator.share({ title: e.title, url }); return; } catch (err) { if (err && err.name === "AbortError") return; } }
+      try { await navigator.clipboard.writeText(url); b.textContent = t().linkCopied; }
+      catch { window.prompt(t().copyLink, url); }
+      setTimeout(() => { b.textContent = t().share + " ↗"; }, 2500);
+    });
+    return b;
+  }
+  // wejście z linku do wydarzenia: otwórz jego okienko
+  let openedFromLink = false;
+  function openFromLink() {
+    if (openedFromLink) return;
+    const p = new URLSearchParams(location.search).get("e");
+    if (!p) return;
+    const id8 = p.split("-").pop();
+    const e = state.events.find((x) => String(x.id).startsWith(id8));
+    openedFromLink = true;
+    if (e) openDetails(e, null);
+  }
+
   // przycisk „Zapisy ↗” (null, gdy link jest niepoprawny)
   function registerLink(e) {
     const url = safeUrl(e.reg_url);
@@ -557,7 +586,12 @@
     if (!detailsDlg) {
       detailsDlg = el("dialog", "details");
       detailsDlg.addEventListener("click", (ev) => { if (ev.target === detailsDlg) detailsDlg.close(); }); // klik w tło
-      detailsDlg.addEventListener("close", () => { document.body.classList.remove("no-scroll"); if (detailsDlg._back) detailsDlg._back.focus(); });
+      detailsDlg.addEventListener("close", () => {
+        document.body.classList.remove("no-scroll");
+        if (detailsDlg._back) detailsDlg._back.focus();
+        // po zamknięciu adres wraca do zwykłego kalendarza (bez ?e=)
+        if (new URLSearchParams(location.search).has("e")) history.replaceState(null, "", location.pathname + location.hash);
+      });
       document.body.appendChild(detailsDlg);
     }
     const dlg = detailsDlg; dlg.textContent = "";
@@ -574,8 +608,16 @@
     const h = el("h2", "ev-title", e.title || ""); h.id = "details-title"; inner.appendChild(h);
     inner.appendChild(eventMeta(e));
     if (e.description) inner.appendChild(el("p", "desc", e.description));
-    const acts = registerActions(e); if (acts) inner.appendChild(acts);
+    const acts = registerActions(e) || el("div", "card-actions");
+    acts.appendChild(shareButton(e));
+    inner.appendChild(acts);
     dlg.appendChild(inner);
+    // adres w pasku = link do tego wydarzenia (można go skopiować albo udostępnić)
+    const param = eventParam(e);
+    if (new URLSearchParams(location.search).get("e") !== param) {
+      history.replaceState(null, "", location.pathname + "?e=" + param + location.hash);
+      if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "/calendar/?e=" + param, title: e.title || "" });
+    }
     // po zamknięciu fokus wraca na kafelek (ważne przy nawigacji klawiaturą)
     dlg._back = card && (card.tagName === "BUTTON" ? card : (card.querySelector(".more:not([hidden])") || card.querySelector(".card-actions a")));
     document.body.classList.add("no-scroll");
@@ -1078,6 +1120,7 @@
     if (error) console.error(error);
     state.events = data || [];
     renderAll();
+    openFromLink();
   }
   async function loadMine() {
     if (!state.user) { state.mine = []; return; }

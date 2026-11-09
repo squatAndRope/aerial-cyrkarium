@@ -28,4 +28,9 @@ RewriteEngine On
 # ale z nazwą, opisem i obrazkiem w nagłówku, żeby podgląd linku i Google widziały konkretne studio.
 RewriteCond %{DOCUMENT_ROOT}/p/$1.html -f
 RewriteRule ^((?:studios|makers)/[a-z0-9-]+)/?$ /p/$1.html [L]
+# Link do wydarzenia: /calendar/?e=<tytuł>-<id> → gotowa strona z podglądem (adres w pasku się nie zmienia;
+# względne ścieżki kalendarza działają, bo strona jest podawana pod /calendar/)
+RewriteCond %{QUERY_STRING} (?:^|&)e=([a-z0-9-]+)
+RewriteCond %{DOCUMENT_ROOT}/p/events/%1.html -f
+RewriteRule ^calendar/?$ /p/events/%1.html [L]
 RewriteRule ^(studios|board|makers|account|admin)(/.*)?$ /index.html [L]

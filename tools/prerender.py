@@ -11,7 +11,7 @@
 # i po każdej zmianie strony. Ręcznie:  python3 tools/prerender.py   (potrzebny Pillow)
 import html, io, json, re, urllib.request
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from common import ROOT, SITE, URL, get, studio_slug, maker_slug, cities
+from common import ROOT, SITE, URL, get, studio_slug, maker_slug, cities, slugify
 
 OUT = ROOT / "p"
 FONTS = ROOT / "tools" / "fonts"
@@ -140,9 +140,9 @@ def short(text, n=155):
 TEMPLATE = (ROOT / "index.html").read_text()
 
 
-def page(title, desc, url, image, alt, ld):
+def page(title, desc, url, image, alt, ld, template=None):
     e = lambda s: html.escape(s, quote=True)
-    h = TEMPLATE
+    h = template or TEMPLATE
     subs = [
         (r"<title>.*?</title>", f"<title>{e(title)}</title>"),
         (r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{e(desc)}">'),
@@ -151,11 +151,17 @@ def page(title, desc, url, image, alt, ld):
         (r'<meta property="og:image" content="[^"]*">', f'<meta property="og:image" content="{e(image)}">'),
         (r'<meta property="og:image:alt" content="[^"]*">', f'<meta property="og:image:alt" content="{e(alt)}">'),
     ]
+    if template:  # kalendarz ma już adres kanoniczny i og:url w nagłówku
+        subs += [(r'<link rel="canonical" href="[^"]*">', f'<link rel="canonical" href="{e(url)}">'),
+                 (r'<meta property="og:url" content="[^"]*">', f'<meta property="og:url" content="{e(url)}">')]
     for pat, rep in subs:
         h, n = re.subn(pat, lambda _m: rep, h, count=1)
+        if pat.startswith("<meta property=\"og:image:alt") and n == 0:  # kalendarz nie ma og:image:alt
+            h = h.replace("</head>", f'  <meta property="og:image:alt" content="{e(alt)}">\n</head>', 1)
+            continue
         assert n == 1, pat
-    extra = (f'  <link rel="canonical" id="canonical" href="{e(url)}">\n'
-             f'  <meta property="og:url" content="{e(url)}">\n'
+    extra = ("" if template else f'  <link rel="canonical" id="canonical" href="{e(url)}">\n'
+             f'  <meta property="og:url" content="{e(url)}">\n') + (
              f'  <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False).replace("</", "<\\/")}</script>\n'
              "  <!-- wygenerowane przez tools/prerender.py, nie edytuj ręcznie -->\n")
     return h.replace("</head>", extra + "</head>", 1).encode()
@@ -218,6 +224,47 @@ for cslug, cname, rows in cities([s for s in studios if s.get("lat") is not None
     changed += write(OUT / "studios" / f"{cslug}.html",
                      page(f"Studia aerial: {cname} ({n}) · Aerial w Polsce", desc, url, img, f"{cname}: {count}", ld))
 
+# wydarzenia z kalendarza: /calendar/?e=<tytuł>-<id8> (.htaccess podaje p/events/<to samo>.html)
+import datetime
+CAL_TEMPLATE = (ROOT / "calendar" / "index.html").read_text()
+TYPES = {"competition": "zawody", "workshop": "warsztaty", "course": "kurs / szkolenie", "festival": "festiwal", "camp": "obóz / intensyw",
+         "meetup": "zjazd / jam", "show": "pokaz", "photoshoot": "sesja zdjęciowa"}
+MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"]
+
+
+def when(a, b):
+    da, db = datetime.date.fromisoformat(a), datetime.date.fromisoformat(b or a)
+    if da == db:
+        return f"{da.day} {MONTHS[da.month - 1]} {da.year}"
+    if (da.year, da.month) == (db.year, db.month):
+        return f"{da.day}–{db.day} {MONTHS[da.month - 1]} {da.year}"
+    return f"{da.day} {MONTHS[da.month - 1]} – {db.day} {MONTHS[db.month - 1]} {db.year}"
+
+
+since = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
+events = [ev for ev in get("events", "id,title,type,date_start,date_end,city,venue,organizer,description,price_pln,is_free,reg_url", order="date_start")
+          if (ev.get("date_end") or ev.get("date_start") or "") >= since]
+for ev in events:
+    param = "-".join(x for x in [slugify(ev["title"] or "")[:50].rstrip("-"), ev["id"][:8]] if x)
+    url = f"{SITE}/calendar/?e={param}"
+    line2 = " · ".join(x for x in [when(ev["date_start"], ev.get("date_end")), ev.get("city"), TYPES.get(ev.get("type"), "")] if x)
+    desc = short(f"{line2}. {ev.get('description') or ''}", 200)
+    img = f"{SITE}/p/og/events/{param}.jpg"
+    ld = {"@context": "https://schema.org", "@type": "Event", "name": ev["title"], "url": url, "image": img,
+          "startDate": ev["date_start"], "endDate": ev.get("date_end") or ev["date_start"],
+          "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled",
+          "description": short(ev.get("description") or line2, 300),
+          "location": {"@type": "Place", "name": ev.get("venue") or ev.get("city"),
+                       "address": {"@type": "PostalAddress", "addressLocality": ev.get("city"), "addressCountry": "PL"}}}
+    if ev.get("organizer"):
+        ld["organizer"] = {"@type": "Organization", "name": ev["organizer"]}
+    if ev.get("reg_url"):
+        ld["offers"] = {"@type": "Offer", "url": ev["reg_url"], "priceCurrency": "PLN",
+                        **({"price": 0} if ev.get("is_free") else ({"price": ev["price_pln"]} if ev.get("price_pln") is not None else {}))}
+    changed += og_image("events", param, ev["title"], line2, None)
+    changed += write(OUT / "events" / f"{param}.html",
+                     page(f"{ev['title']} · {line2} · Aerial w Polsce", desc, url, img, f"{ev['title']}, {line2}", ld, CAL_TEMPLATE))
+
 makers = get("makers", "id,name,city,products,description,website_url,shop_url,instagram_url,facebook_url,logo_path")
 for m in makers:
     slug = maker_slug(makers, m)
@@ -244,4 +291,4 @@ for f in OUT.rglob("*"):
     if f.is_file() and f not in written:
         f.unlink()
         removed += 1
-print(f"strony profili: {len(studios)} studiów, {len(makers)} producentów; zmienione pliki: {changed}, usunięte: {removed}")
+print(f"strony profili: {len(studios)} studiów, {len(makers)} producentów, {len(events)} wydarzeń; zmienione pliki: {changed}, usunięte: {removed}")

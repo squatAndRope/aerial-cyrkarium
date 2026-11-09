@@ -5,7 +5,8 @@
 # (.github/workflows/pages.yml), ręcznie:
 #   python3 tools/sitemap.py
 # Ogłoszeń nie dodajemy (znikają po 60 dniach).
-from common import ROOT, SITE, get, studio_slug, maker_slug, cities
+import datetime
+from common import ROOT, SITE, get, studio_slug, maker_slug, cities, slugify
 
 
 def day(iso): return (iso or "")[:10]
@@ -26,6 +27,12 @@ for s in studios:
     urls.append((f"{SITE}/studios/{studio_slug(studios, s)}", day(s["updated_at"]), "0.6"))
 for m in makers:
     urls.append((f"{SITE}/makers/{maker_slug(makers, m)}", day(m["updated_at"]), "0.6"))
+# nadchodzące wydarzenia (link jak w kalendarzu: /calendar/?e=<tytuł>-<id8>)
+today = datetime.date.today().isoformat()
+for ev in get("events", "id,title,date_end,date_start,updated_at", order="date_start"):
+    if (ev.get("date_end") or ev.get("date_start") or "") >= today:
+        param = "-".join(x for x in [slugify(ev["title"] or "")[:50].rstrip("-"), ev["id"][:8]] if x)
+        urls.append((f"{SITE}/calendar/?e={param}", day(ev["updated_at"]), "0.6"))
 
 xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 for loc, mod, pri in urls:
