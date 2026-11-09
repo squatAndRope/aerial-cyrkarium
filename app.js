@@ -655,7 +655,7 @@
         ${claim}
         ${s.status === "approved" ? reportForm("studio", s.id) : ""}
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
-        ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>${s.source_name ? `<button type="button" class="btn ghost" data-unsource="${esc(s.id)}">${esc(t().removeSource)}</button>` : ""}</div>` : ""}
+        ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>${s.source_name ? `<button type="button" class="btn ghost" data-unsource="${esc(s.id)}">${esc(t().removeSource)}</button>` : ""}<button type="button" class="btn bad" data-remove="${esc(s.id)}">${esc(t().removeFromMap)}</button></div>` : ""}
       </div>
       <div>
         <div class="linked"><h3>${esc(atStudio.length ? t().eventsAtStudio : t().eventsHere(s.city))}</h3>
@@ -933,7 +933,7 @@
         <div class="tags">${makerTags(m)}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
         <p class="small">${esc(t().makerNoContact)}</p>
-        ${state.isAdmin && m.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-kverify="${esc(m.id)}">${esc(m.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a></div>` : ""}
+        ${state.isAdmin && m.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-kverify="${esc(m.id)}">${esc(m.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/makers/edit/${esc(m.id)}">${esc(t().edit)}</a><button type="button" class="btn bad" data-kremove="${esc(m.id)}">${esc(t().removeFromList)}</button></div>` : ""}
       </div>
       <div>
         ${m.status === "approved" ? reportForm("maker", m.id) : ""}
@@ -1413,7 +1413,9 @@
       const { error } = await state.sb.from("makers").delete().eq("id", d.kremove);
       if (error) { notice(t().errSave, "bad"); return; }
       dropLogo(gone);
-      await loadMakers(); renderMine();
+      await loadMakers();
+      // z profilu (przycisk admina „Usuń z mapy”) wracamy do listy; z Moich wpisów zostajemy na miejscu
+      if ($("view-moje").hidden) { go("/makers/"); notice(t().removedMaker); } else renderMine();
     }
     else if (d.lcat) { state.lfilter.cat = d.lcat; state.lfilter.kind = "all"; renderBoard(); }
     else if (d.lkind) { state.lfilter.kind = d.lkind; renderBoard(); }
@@ -1437,7 +1439,9 @@
       const { error } = await state.sb.from("studios").delete().eq("id", d.remove);
       if (error) { notice(t().errSave, "bad"); return; }
       dropLogo(gone);
-      await loadStudios(); renderMine();
+      await loadStudios();
+      // z profilu (przycisk admina „Usuń z mapy”) wracamy do listy; z Moich wpisów zostajemy na miejscu
+      if ($("view-moje").hidden) { go("/studios/"); notice(t().removedStudio); } else renderMine();
     }
   });
   $("f-q").addEventListener("input", (e) => { state.filter.q = e.target.value; renderStudios(); });
