@@ -173,7 +173,7 @@
     studios: [],        // wszystko, co baza pozwala przeczytać tej osobie
     events: [],         // nadchodzące, zatwierdzone wydarzenia z Aerial Events
     loaded: false, loadFailed: false,
-    filter: { disc: "all", act: "", q: "", level: "", kids: false, open: false, rental: false },
+    filter: { disc: "all", act: "", q: "", level: "", kids: false, open: false, rental: false, birthdays: false },
     current: null,      // id otwartego profilu
     listings: [],       // ogłoszenia, które baza pozwala przeczytać tej osobie
     stats: {},          // liczba wiadomości przy moich ogłoszeniach
@@ -428,6 +428,7 @@
     if (f.kids && !s.kids) return false;
     if (f.open && !s.open_training) return false;
     if (f.rental && !s.rental) return false;
+    if (f.birthdays && !s.birthdays) return false;
     if (f.q) {
       const q = cityKey(f.q);
       if (!cityKey(s.name).includes(q) && !cityKey(s.city).includes(q)) return false;
@@ -448,6 +449,7 @@
     $("f-kids").checked = state.filter.kids;
     $("f-open").checked = state.filter.open;
     $("f-rental").checked = state.filter.rental;
+    $("f-birthdays").checked = state.filter.birthdays;
   }
 
   function renderStudios() {
@@ -464,9 +466,9 @@
     else box.innerHTML = list.map((s) => `<a class="st" href="${esc(studioPath(s))}" aria-current="${s.id === state.current}">
         <span class="st-head">${logoImg(s.logo_path, s.name, "logo sm")}<strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
         <span class="st-meta">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
-        <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${s.open_training ? `<span class="tag tag-extra">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag tag-extra">${esc(t().rentalTag)}</span>` : ""}</span>
+        <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${s.open_training ? `<span class="tag tag-extra">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag tag-extra">${esc(t().rentalTag)}</span>` : ""}${s.birthdays ? `<span class="tag tag-extra">${esc(t().birthdaysTag)}</span>` : ""}</span>
       </a>`).join("");
-    $("clear-f")?.addEventListener("click", () => { state.filter = { disc: "all", q: "", level: "", kids: false, open: false, rental: false }; $("f-q").value = ""; renderStudios(); });
+    $("clear-f")?.addEventListener("click", () => { state.filter = { disc: "all", act: "", q: "", level: "", kids: false, open: false, rental: false, birthdays: false }; $("f-q").value = ""; renderStudios(); });
 
     renderMap(list);
     renderProfile();
@@ -539,7 +541,7 @@
         </div>
         <div class="profile-title">${logoImg(s.logo_path, s.name, "logo big")}<h2>${esc(s.name)}</h2></div>
         ${s.description ? `<p>${esc(s.description)}</p>` : `<p class="muted">${esc(t().noDesc)}</p>`}
-        <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}${(s.activities || []).map((a) => `<span class="tag soft">${esc(t().activities[a] || a)}</span>`).join("")}</div>
+        <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}${s.birthdays ? `<span class="tag">${esc(t().birthdaysTag)}</span>` : ""}${(s.activities || []).map((a) => `<span class="tag soft">${esc(t().activities[a] || a)}</span>`).join("")}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
         ${state.emailIds.has(String(s.id)) ? `<div class="links" id="mail-${esc(s.id)}"><button type="button" class="btn ghost" data-showmail="${esc(s.id)}">${esc(t().showEmail)}</button></div>` : ""}
         <p class="small">${esc(t().noContactNote)}</p>
@@ -937,6 +939,7 @@
         <label class="toggle"><input type="checkbox" id="s-kids"${v.kids ? " checked" : ""}> <span>${esc(t().fKids)}</span></label>
         <label class="toggle"><input type="checkbox" id="s-open"${v.open_training ? " checked" : ""}> <span>${esc(t().fOpen)}</span></label>
         <label class="toggle"><input type="checkbox" id="s-rental"${v.rental ? " checked" : ""}> <span>${esc(t().fRental)}</span></label>
+        <label class="toggle"><input type="checkbox" id="s-birthdays"${v.birthdays ? " checked" : ""}> <span>${esc(t().fBirthdays)}</span></label>
       </div>
       <div class="field"><span class="label">${esc(t().fActs)}</span>${checks("act", t().activities, v.activities)}</div>
       <div class="field"><label class="req" for="s-desc">${esc(t().fDesc)}</label><textarea id="s-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().fDescHint)}</p></div>
@@ -974,7 +977,7 @@
       const row = {
         name: val("s-name"), city: val("s-city"), address: val("s-address") || null,
         disciplines: picked("disc"), levels: picked("lvl"), kids: $("s-kids").checked,
-        open_training: $("s-open").checked, rental: $("s-rental").checked, submitted_by_owner: $("s-owner").checked, activities: picked("act"),
+        open_training: $("s-open").checked, rental: $("s-rental").checked, birthdays: $("s-birthdays").checked, submitted_by_owner: $("s-owner").checked, activities: picked("act"),
         description: val("s-desc") || null,
         website_url: val("s-web") || null, instagram_url: cleanSocial(val("s-ig")), facebook_url: cleanSocial(val("s-fb")),
       };
@@ -1310,6 +1313,7 @@
   $("f-kids").addEventListener("change", (e) => { state.filter.kids = e.target.checked; renderStudios(); });
   $("f-open").addEventListener("change", (e) => { state.filter.open = e.target.checked; renderStudios(); });
   $("f-rental").addEventListener("change", (e) => { state.filter.rental = e.target.checked; renderStudios(); });
+  $("f-birthdays").addEventListener("change", (e) => { state.filter.birthdays = e.target.checked; renderStudios(); });
   $("l-q").addEventListener("input", (e) => { state.lfilter.q = e.target.value; renderBoard(); });
   $("m-q").addEventListener("input", (e) => { state.mfilter.q = e.target.value; renderMakers(); });
   $("m-custom").addEventListener("change", (e) => { state.mfilter.custom = e.target.checked; renderMakers(); });
