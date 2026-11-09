@@ -896,9 +896,9 @@
       let logo;
       try { logo = await prepareLogo("k", m?.logo_path); } catch (err) { btn.disabled = false; btn.textContent = t().submit; return fail(err.message === "type" ? t().errLogoType : t().errLogo); }
       row.logo_path = logo.logo_path;
-      const { error } = m ? await state.sb.from("makers").update(row).eq("id", m.id) : await state.sb.from("makers").insert(row);
+      const { error } = m ? await state.sb.from("makers").update(row).eq("id", m.id).eq("updated_at", m.updated_at).select("id").single() : await state.sb.from("makers").insert(row);
       btn.disabled = false; btn.textContent = t().submit;
-      if (error) { console.warn(error); if (logo.logo_path !== (m?.logo_path || null)) dropLogo(logo.logo_path); return fail(error.code === "P0001" ? error.message : t().errSave); }
+      if (error) { console.warn(error); if (logo.logo_path !== (m?.logo_path || null)) dropLogo(logo.logo_path); if (error.code === "PGRST116") { await loadMakers(); return fail(t().errStale); } return fail(error.code === "P0001" ? error.message : t().errSave); }
       if (logo.old && logo.old !== logo.logo_path) dropLogo(logo.old);
       await loadMakers();
       go("/account/");
@@ -1011,9 +1011,11 @@
       let logo;
       try { logo = await prepareLogo("s", s?.logo_path); } catch (err) { done(); return fail(err.message === "type" ? t().errLogoType : t().errLogo); }
       row.logo_path = logo.logo_path;
-      const q = s ? state.sb.from("studios").update(row).eq("id", s.id).select("id").single() : state.sb.from("studios").insert(row).select("id").single();
+      // przy edycji zapis tylko wtedy, gdy nikt nie zmienił wpisu od otwarcia formularza (inaczej stary formularz nadpisałby nowsze dane)
+      const q = s ? state.sb.from("studios").update(row).eq("id", s.id).eq("updated_at", s.updated_at).select("id").single() : state.sb.from("studios").insert(row).select("id").single();
       const { data: savedRow, error } = await q;
-      if (error) { done(); console.warn(error); if (logo.logo_path !== (s?.logo_path || null)) dropLogo(logo.logo_path); return fail(error.code === "P0001" ? error.message : error.code === "23514" ? t().errContactDb : t().errSave); }
+      if (error) { done(); console.warn(error); if (logo.logo_path !== (s?.logo_path || null)) dropLogo(logo.logo_path); if (error.code === "PGRST116") { await loadStudios(); return fail(t().errStale); }
+        return fail(error.code === "P0001" ? error.message : error.code === "23514" ? t().errContactDb : t().errSave); }
       // e-mail kontaktowy: osobna tabela, zapis tylko z zaznaczoną zgodą; puste pole usuwa adres
       const sid = savedRow?.id || s?.id;
       const prev = s ? state.emails[s.id] || "" : "";
