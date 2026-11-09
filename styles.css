@@ -334,3 +334,23 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 
 /* ---------- 18. Opisy z nowymi liniami (listy, akapity wpisane w formularzu) ---------- */
 .profile > div > p { white-space: pre-line; }
+
+/* zdjęcia w ogłoszeniach */
+.photo-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.photo-grid:empty { display: none; }
+.ph { position: relative; width: 96px; height: 96px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-del { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #FFFFFF; cursor: pointer; font-size: 12px; line-height: 24px; padding: 0; }
+.card-photo { position: relative; display: block; margin: -4px -4px 10px; border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; background: var(--line); }
+.card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-count { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,.65); color: #FFFFFF; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+.gallery { margin: 14px 0 4px; }
+.gallery > a { display: block; border-radius: 12px; overflow: hidden; background: var(--line); }
+.gallery #g-main { width: 100%; max-height: 520px; object-fit: contain; display: block; }
+.g-thumbs { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.g-thumb { width: 72px; height: 72px; padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; cursor: pointer; background: none; }
+.g-thumb[aria-pressed="true"] { border-color: var(--plum); }
+.g-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.ph-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; display: block; }
+#f-photo-add { align-self: flex-start; width: auto; }

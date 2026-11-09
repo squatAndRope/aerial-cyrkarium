@@ -50,14 +50,20 @@
     ? `<img class="${cls}" src="${esc(logoUrl(p))}" alt="${esc(t().logoOf(name))}" loading="lazy">`
     : `<span class="${cls} logo-letter" aria-hidden="true">${esc(initial(name))}</span>`);
   // zmniejsza obrazek do 400 px (dłuższy bok) i zapisuje jako WebP; Safari bez WebP dostaje PNG
-  async function shrinkLogo(file) {
-    const bmp = await createImageBitmap(file);
-    const scale = Math.min(1, 400 / Math.max(bmp.width, bmp.height));
+  async function shrinkLogo(file) { return shrinkImage(file, 400, 0.86); }
+  // wspólne zmniejszanie: rysowanie na płótnie gubi przy okazji dane z aparatu (EXIF, w tym lokalizację GPS)
+  async function shrinkImage(file, max, quality) {
+    let bmp;
+    try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); } catch { bmp = await createImageBitmap(file); }
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
     const c = document.createElement("canvas");
     c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
     c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-    const blob = await new Promise((res) => c.toBlob(res, "image/webp", 0.86));
-    return blob.type === "image/webp" ? { blob, ext: "webp" } : { blob: await new Promise((res) => c.toBlob(res, "image/png")), ext: "png" };
+    const blob = await new Promise((res) => c.toBlob(res, "image/webp", quality));
+    if (blob && blob.type === "image/webp") return { blob, ext: "webp" };
+    // przeglądarki bez WebP: duże zdjęcia jako JPG (PNG byłby za ciężki), loga jako PNG
+    return max > 400 ? { blob: await new Promise((res) => c.toBlob(res, "image/jpeg", 0.85)), ext: "jpg" }
+      : { blob: await new Promise((res) => c.toBlob(res, "image/png")), ext: "png" };
   }
   // pole „Logo” w formularzu (studio i producent)
   const logoField = (prefix, path, name) => `<div class="field"><label for="${prefix}-logo">${esc(t().fLogo)}</label>
@@ -77,6 +83,10 @@
     if (error) { console.warn(error); throw new Error("upload"); }
     return { logo_path: path, old: currentPath || null };
   }
+  // zdjęcia ogłoszeń: osobny pojemnik, do 4 na ogłoszenie
+  const MAX_PHOTOS = 4;
+  const photoUrl = (p) => `${CFG.supabaseUrl}/storage/v1/object/public/listing-photos/${p}`;
+  const dropPhotos = (paths) => { if (paths?.length && state.sb) state.sb.storage.from("listing-photos").remove(paths).catch(() => {}); };
   const dropLogo = (path) => { if (path && state.sb) state.sb.storage.from("logos").remove([path]).catch(() => {}); };
 
   // adresy: /studios/real-passion-krakow, /board/sprzedam-szarfy-9m-981aa275
@@ -593,6 +603,7 @@
     if (!list.length) { box.innerHTML = `<div class="empty"><p>${esc(t().boardNoMatch)}</p></div>`; return; }
     const now = new Date();
     box.innerHTML = list.map((l) => `<article class="card">
+      ${(l.photos || []).length ? `<a class="card-photo" href="${esc(listingPath(l))}"><img src="${esc(photoUrl(l.photos[0]))}" alt="" loading="lazy">${l.photos.length > 1 ? `<span class="ph-count">${l.photos.length}</span>` : ""}</a>` : ""}
       <div class="card-top">${listingTag(l)}<span>${esc(t().ago(daysBetween(new Date(l.created_at), now)))}</span></div>
       <h3>${esc(l.title)}</h3>
       <p>${esc(l.description)}</p>
@@ -628,6 +639,8 @@
         <div>${listingTag(l)}</div>
         <h1>${esc(l.title)}</h1>
         <p class="small" style="margin:0">${meta}${priceHtml(l) ? ` · <strong>${priceHtml(l)}</strong>` : ""}</p>
+        ${(l.photos || []).length ? `<div class="gallery"><a id="g-main-link" href="${esc(photoUrl(l.photos[0]))}" target="_blank" rel="noopener"><img id="g-main" src="${esc(photoUrl(l.photos[0]))}" alt="${esc(t().photoOf(l.title))}"></a>
+          ${l.photos.length > 1 ? `<div class="g-thumbs">${l.photos.map((p, i) => `<button type="button" class="g-thumb" data-gphoto="${esc(p)}" aria-pressed="${i === 0}"><img src="${esc(photoUrl(p))}" alt="${esc(t().photoN(i + 1))}" loading="lazy"></button>`).join("")}</div>` : ""}</div>` : ""}
         <p class="desc">${esc(l.description)}</p>
         <a class="small" href="${esc(report)}">${esc(t().report)}</a>
       </section>${form}</div></div>`;
@@ -669,6 +682,11 @@
         <div class="field"><label class="req" for="f-nick">${esc(t().lNick)}</label><input id="f-nick" maxlength="40" value="${esc(v.nick)}"></div>
         <div class="field"><label class="req" for="f-city">${esc(t().lCity)}</label><input id="f-city" maxlength="60" value="${esc(v.city)}"></div>
       </div>
+      <div class="field"><span class="label">${esc(t().lPhotos)}</span>
+        <div class="photo-grid" id="f-photos"></div>
+        <input id="f-photo-in" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+        <button type="button" class="btn ghost" id="f-photo-add">${esc(t().lPhotoAdd)}</button>
+        <p class="hint">${esc(t().lPhotosHint)}</p></div>
       <div class="field" id="f-price-wrap"><label for="f-price">${esc(t().lPrice)}</label><input id="f-price" maxlength="40" placeholder="${esc(t().lPricePh)}" value="${esc(v.price)}"></div>
       <p class="small" style="margin:0">${esc(t().emailPrivate)}${privacyLink()}</p>
       <div id="f-msg"></div>
@@ -688,6 +706,29 @@
     $("f-cat").addEventListener("change", drawKinds);
     $("f-kind").addEventListener("change", (e) => { kind = e.target.value; $("f-price-wrap").hidden = !hasPrice(kind); });
     drawKinds();
+
+    // zdjęcia: kept = już zapisane ścieżki, added = nowe pliki (wgrywane dopiero przy wysłaniu)
+    let kept = [...(v.photos || [])];
+    let added = [];
+    const drawPhotos = () => {
+      $("f-photos").innerHTML = kept.map((p, i) => `<div class="ph"><img src="${esc(photoUrl(p))}" alt=""><button type="button" class="ph-del" data-k="${i}" aria-label="${esc(t().lPhotoDel)}">✕</button></div>`).join("")
+        + added.map((a, i) => `<div class="ph"><img src="${a.url}" alt=""><button type="button" class="ph-del" data-a="${i}" aria-label="${esc(t().lPhotoDel)}">✕</button></div>`).join("");
+      $("f-photo-add").hidden = kept.length + added.length >= MAX_PHOTOS;
+    };
+    $("f-photo-add").addEventListener("click", () => $("f-photo-in").click());
+    $("f-photo-in").addEventListener("change", (e) => {
+      const room = MAX_PHOTOS - kept.length - added.length;
+      [...e.target.files].filter((f) => /^image\//.test(f.type)).slice(0, room).forEach((f) => added.push({ file: f, url: URL.createObjectURL(f) }));
+      e.target.value = "";
+      drawPhotos();
+    });
+    $("f-photos").addEventListener("click", (e) => {
+      const x = e.target.closest(".ph-del"); if (!x) return;
+      if (x.dataset.k != null) kept.splice(Number(x.dataset.k), 1);
+      else { URL.revokeObjectURL(added[Number(x.dataset.a)].url); added.splice(Number(x.dataset.a), 1); }
+      drawPhotos();
+    });
+    drawPhotos();
 
     const fields = ["f-title", "f-desc", "f-nick", "f-price"];
     const check = () => {
@@ -710,8 +751,22 @@
       if (found.length) return fail(t().lErrContact(found.join(t().and)));
       if (DEMO) { msg.innerHTML = `<p class="msg ok">${esc(t().lSaved)} (demo)</p>`; return; }
       const btn = $("f-submit"); btn.disabled = true; btn.textContent = t().saving;
+      // nowe zdjęcia: zmniejsz i wgraj do własnego folderu
+      const uploaded = [];
+      try {
+        for (const a of added) {
+          const { blob, ext } = await shrinkImage(a.file, 1200, 0.82);
+          const path = `${state.user.id}/${crypto.randomUUID()}.${ext}`;
+          const up = await state.sb.storage.from("listing-photos").upload(path, blob, { contentType: blob.type, upsert: false });
+          if (up.error) throw up.error;
+          uploaded.push(path);
+        }
+      } catch (err) { console.warn(err); dropPhotos(uploaded); btn.disabled = false; btn.textContent = t().lSubmit; return fail(t().lErrPhoto); }
+      row.photos = [...kept, ...uploaded];
       const { error } = l ? await state.sb.from("listings").update(row).eq("id", l.id) : await state.sb.from("listings").insert(row);
       btn.disabled = false; btn.textContent = t().lSubmit;
+      if (error) { dropPhotos(uploaded); }
+      else { dropPhotos((l?.photos || []).filter((p) => !kept.includes(p))); added.forEach((a) => URL.revokeObjectURL(a.url)); }
       if (error) { console.warn(error); return fail(error.code === "P0001" ? error.message : /no_contact/.test(error.message) ? t().lErrContact(t().phone + t().and + t().email) : t().errSave); }
       await loadListings();
       go("/account/");
@@ -1010,6 +1065,7 @@
       ${stamp(l, admin && t().typeListing)}
       <span class="small">${esc(t().cats[l.category] || l.category)} · ${esc(kindLabel(l))} · ${esc(l.nick)} · ${esc(l.city)}${l.price ? " · " + esc(l.price) : ""}${st === "approved" ? " · " + esc(t().expiresIn(daysBetween(new Date(), new Date(l.expires_at)) + 1)) : ""}</span>
       <span class="small">${esc(l.description)}</span>
+      ${(l.photos || []).length ? `<div class="ph-row">${l.photos.map((p) => `<a href="${esc(photoUrl(p))}" target="_blank" rel="noopener"><img src="${esc(photoUrl(p))}" alt="" loading="lazy"></a>`).join("")}</div>` : ""}
       ${!admin ? `<span class="small"><strong>${esc(t().lMessages(n))}</strong></span>` : ""}
       ${st === "rejected" && l.rejection_reason ? `<p class="msg bad">${esc(l.rejection_reason)}</p>` : ""}
       <div class="form-actions">
@@ -1032,7 +1088,16 @@
   }
   const newest = (a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
 
+  // sprzątanie zdjęć po usuniętych ogłoszeniach: raz na wizytę, gdy admin otworzy kolejkę
+  async function sweepPhotos() {
+    if (DEMO || !state.isAdmin || state.photoSweep) return;
+    state.photoSweep = true;
+    const { data } = await state.sb.rpc("listing_orphan_photos");
+    if (data?.length) dropPhotos(data);
+  }
+
   function renderMine() {
+    sweepPhotos();
     const box = $("mine-box");
     box.innerHTML = "";
     if (!state.user) { box.appendChild(loginPanel(t().login)); return; }
@@ -1180,6 +1245,10 @@
     const d = b.dataset;
     if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
+    else if (d.gphoto) {
+      $("g-main").src = photoUrl(d.gphoto); $("g-main-link").href = photoUrl(d.gphoto);
+      document.querySelectorAll(".g-thumb").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    }
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
     else if (d.act) { state.filter.act = state.filter.act === d.act ? "" : d.act; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
@@ -1219,8 +1288,10 @@
     }
     else if (d.lremove) {
       if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const goneP = state.listings.find((x) => String(x.id) === d.lremove)?.photos || [];
       const { error } = await state.sb.from("listings").delete().eq("id", d.lremove);
       if (error) { notice(t().errSave, "bad"); return; }
+      dropPhotos(goneP);
       await loadListings(); renderMine();
     }
     else if (d.remove) {
