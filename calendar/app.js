@@ -369,6 +369,8 @@
     if (!url) return null;
     const a = el("a", "btn primary", t().register + " ↗");
     a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    // statystyki (GoatCounter, bez cookies): ile osób przeszło do zapisów na to wydarzenie
+    a.addEventListener("click", () => { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "zapisy/" + e.id, title: e.title || "", event: true }); });
     return a;
   }
   function registerActions(e) {

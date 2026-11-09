@@ -328,6 +328,20 @@
     return wrap;
   }
 
+  // ---------------- statystyki (GoatCounter, bez cookies) ----------------
+  // Pierwsze wejście liczy sam skrypt count.js; tu liczymy przejścia wewnątrz strony (history.pushState)
+  // i wybrane kliknięcia (zapisy, e-mail, strona studia). Bez ?demo i bez lokalnego podglądu.
+  let countedPath = location.pathname;
+  const gcOk = () => !DEMO && window.goatcounter && typeof window.goatcounter.count === "function";
+  function countView() {
+    if (location.pathname === countedPath) return;
+    countedPath = location.pathname;
+    if (gcOk()) window.goatcounter.count({ path: location.pathname, title: document.title });
+  }
+  function countClick(name, title) {
+    if (gcOk()) window.goatcounter.count({ path: name, title: title || name, event: true });
+  }
+
   // ---------------- 3. Nawigacja ----------------
   // Jedna strona obsługuje wszystkie adresy (reguła w .htaccess kieruje /studios/…, /board/…
   // i /account/ do index.html). Stare polskie ścieżki (/studia/…) przekierowuje .htaccess. Linki wewnątrz przechodzą bez przeładowania (history.pushState).
@@ -417,6 +431,7 @@
     if (!canon) { canon = document.createElement("link"); canon.rel = "canonical"; canon.id = "canonical"; document.head.appendChild(canon); }
     canon.href = "https://aerial.cyrkarium.com" + location.pathname;
     document.title = view === "home" ? `${t().brand} · Fundacja Cyrkarium` : `${title} · ${t().brand}`;
+    countView();
   }
 
   // ---------------- 4. Studia ----------------
@@ -530,7 +545,7 @@
     if (map && s.lat != null) map.setView([s.lat, s.lng], Math.max(map.getZoom(), 12));
     const links = [["website_url", t().website, "primary"], ["instagram_url", t().instagram, "ghost"], ["facebook_url", t().facebook, "ghost"]]
       .filter(([k]) => safeUrl(s[k]))
-      .map(([k, label, kind]) => `<a class="btn ${kind}" href="${esc(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow">${esc(label)} ↗</a>`).join("");
+      .map(([k, label, kind]) => `<a class="btn ${kind}" href="${esc(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow" data-gc="studio-${k.replace("_url", "")}/${esc(studioSlug(s))}" data-gct="${esc(s.name)}">${esc(label)} ↗</a>`).join("");
     // najpierw wydarzenia w tym studiu; gdy ich brak, najbliższe w mieście
     const atStudio = state.events.filter((e) => String(e.studio_id) === String(s.id));
     const inCity = state.events.filter((e) => String(e.studio_id) !== String(s.id) && cityKey(e.city) === cityKey(s.city));
@@ -575,7 +590,7 @@
   }
   function eventRow(e) {
     const url = safeUrl(e.reg_url) || CFG.eventsUrl;
-    return `<a class="ev" href="${esc(url)}" target="_blank" rel="noopener nofollow">${dateBox(e.date_start)}<span class="ev-text"><strong>${esc(e.title)}</strong><span>${esc(e.city)}${e.venue ? " · " + esc(e.venue) : ""}</span></span></a>`;
+    return `<a class="ev" href="${esc(url)}" target="_blank" rel="noopener nofollow" data-gc="zapisy/${esc(e.id)}" data-gct="${esc(e.title)}">${dateBox(e.date_start)}<span class="ev-text"><strong>${esc(e.title)}</strong><span>${esc(e.city)}${e.venue ? " · " + esc(e.venue) : ""}</span></span></a>`;
   }
   function renderHome() {
     const set = (id, n, ready) => { $(id).textContent = ready ? String(n) : "–"; };
@@ -1253,6 +1268,11 @@
   }
 
   // ---------------- 8. Start ----------------
+  // kliknięcia w linki wychodzące oznaczone data-gc (strona/Instagram/Facebook studia, zapisy na wydarzenie)
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-gc]");
+    if (a) countClick(a.dataset.gc, a.dataset.gct);
+  }, true);
   document.addEventListener("click", async (e) => {
     const b = e.target.closest("button");
     if (!b) return;
@@ -1274,6 +1294,7 @@
     }
     else if (d.showmail) {
       const { data } = await state.sb.rpc("studio_email", { sid: d.showmail });
+      countClick("email/" + studioSlug(state.studios.find((x) => String(x.id) === d.showmail) || { id: d.showmail, name: "", city: "" }), "Pokaż e-mail");
       const box = $("mail-" + d.showmail);
       if (box && data) box.innerHTML = `<a class="btn ghost" href="mailto:${esc(data)}">${esc(data)}</a>`;
     }
