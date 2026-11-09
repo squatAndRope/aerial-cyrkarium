@@ -51,7 +51,8 @@
     sb: null, user: null, isAdmin: false,
     events: [], eventsLoaded: false, eventsError: false,
     mine: [], pending: [],
-    filter: { type: "", city: "", level: "", disc: "", aud: "", q: "", past: false },
+    filter: { type: "", city: new URLSearchParams(location.search).get("city") || "", level: "", disc: "", aud: "", q: "", past: false },
+    studios: [], studioById: {},
     view: "events", editing: null, authReady: false, mode: "list",
   };
 
@@ -324,9 +325,44 @@
     meta.appendChild(el("span", "where", [e.city, e.venue].filter(Boolean).join(" · ")));
     const price = priceText(e); if (price) meta.appendChild(el("span", null, price));
     if (e.organizer) meta.appendChild(el("span", null, t().by + ": " + e.organizer));
+    const st = e.studio_id && state.studioById[e.studio_id];
+    if (st) meta.appendChild(studioChip(st));
     if (e.reg_deadline) meta.appendChild(el("span", null, t().deadline + " " + fmt({ day: "numeric", month: "long" }, e.reg_deadline)));
     return meta;
   }
+  // ramka studia z mapy (wydarzenie odbywa się w tym studiu); link do profilu w zakładce Studia
+  const LOGOS = CFG.supabaseUrl + "/storage/v1/object/public/logos/";
+  function studioChip(s) {
+    const a = el("a", "studio-chip"); a.href = "/studios/" + s.id;
+    const badge = el("span", "sc-logo");
+    if (s.logo_path) { const img = el("img"); img.src = LOGOS + s.logo_path; img.alt = ""; img.loading = "lazy"; badge.appendChild(img); }
+    else badge.textContent = ((s.name || "").match(/[\p{L}\p{N}]/u) || ["•"])[0].toUpperCase();
+    a.appendChild(badge);
+    const txt = el("span", "sc-txt");
+    txt.appendChild(el("strong", null, s.name));
+    txt.appendChild(el("small", null, [s.city, s.address].filter(Boolean).join(" · ")));
+    a.appendChild(txt);
+    a.appendChild(el("span", "sc-go", t().studioProfile + " →"));
+    return a;
+  }
+  // studia z mapy w podanym mieście (podpowiedzi w polu „Miejsce”)
+  const studioLabel = (s) => s.name + (s.address ? ", " + s.address : "");
+  function fillVenueHints() {
+    const list = $("venue-list"); if (!list) return;
+    const c = cityKey($("i-city").value);
+    list.textContent = "";
+    state.studios.filter((s) => c && cityKey(s.city) === c).forEach((s) => { const o = el("option"); o.value = studioLabel(s); list.appendChild(o); });
+  }
+  // przypięcie wydarzenia do studia: nazwa studia (albo „nazwa, adres”) wpisana w polu „Miejsce”, to samo miasto
+  function matchStudio(venue, city) {
+    const v = cityKey(venue), c = cityKey(city);
+    if (!v || !c) return null;
+    const inCity = state.studios.filter((s) => cityKey(s.city) === c);
+    const hit = inCity.find((s) => v === cityKey(studioLabel(s))) || inCity.find((s) => v === cityKey(s.name))
+      || inCity.find((s) => v.startsWith(cityKey(s.name) + ","));
+    return hit ? hit.id : null;
+  }
+
   // przycisk „Zapisy ↗” (null, gdy link jest niepoprawny)
   function registerLink(e) {
     const url = safeUrl(e.reg_url);
@@ -389,6 +425,7 @@
   function renderCityFilter() {
     const cities = [...new Set(state.events.map((e) => e.city).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pl"));
     fillSelect($("f-city"), [["", t().allCities]].concat(cities.map((c) => [c, c])));
+    if (state.filter.city) $("f-city").value = state.filter.city;
     // podpowiedzi w polu „Miasto” w formularzu: miejscowości, które już są w kalendarzu
     const hints = $("cities"); hints.textContent = "";
     cities.forEach((c) => { const o = el("option"); o.value = c; hints.appendChild(o); });
@@ -776,6 +813,7 @@
     if (e.date_end === e.date_start) $("i-end").value = "";
     renderDiscChecks(discsOf(e));
     renderLevelChips();
+    fillVenueHints();
     if (e.lat != null) { formGeo = { city: e.city, lat: e.lat, lng: e.lng }; $("geo-note").className = "hint geo-ok"; $("geo-note").textContent = t().geoFound + " " + e.city; }
     $("i-free").checked = !!e.is_free;
     $("i-price").disabled = !!e.is_free;
@@ -799,6 +837,8 @@
     note.textContent = hit ? t().geoFound + " " + hit.label : (hit === null ? t().geoNotFound : "");
   }
   $("i-city").addEventListener("change", lookupFormCity);
+  $("i-city").addEventListener("input", fillVenueHints);
+  $("i-city").addEventListener("change", fillVenueHints);
 
   $("i-free").addEventListener("change", (e) => { $("i-price").disabled = e.target.checked; if (e.target.checked) $("i-price").value = ""; });
 
@@ -840,6 +880,7 @@
     $("i-url").value = normalizeUrl($("i-url").value);
     await lookupFormCity(); // gdyby ktoś wysłał formularz, nie wychodząc z pola „Miasto”
     FIELDS.forEach(([id, k]) => { data[k] = v(id) || null; });
+    data.studio_id = matchStudio(data.venue, data.city);
     const geo = formGeo && formGeo.city === data.city ? formGeo : null; // bez pinezki uzupełni ją panel admina
     data.lat = geo ? geo.lat : null;
     data.lng = geo ? geo.lng : null;
@@ -1020,6 +1061,14 @@
   // ------------------------------------------------------------------
   // Dane
   // ------------------------------------------------------------------
+  // studia z mapy (do ramki przy wydarzeniu i podpowiedzi miejsca); wczytywane raz
+  async function loadStudios() {
+    const { data, error } = await state.sb.from("studios").select("id,name,city,address,logo_path").eq("status", "approved").order("name");
+    if (error) { console.warn("studios:", error.message); return; }
+    state.studios = data || [];
+    state.studioById = Object.fromEntries(state.studios.map((s) => [s.id, s]));
+    renderEvents();
+  }
   async function loadEvents() {
     const { data, error } = await state.sb.from("events").select("*").eq("status", "approved").order("date_start");
     state.eventsLoaded = true;
@@ -1082,6 +1131,7 @@
 
   if (state.sb) {
     loadEvents();
+    loadStudios();
     let first = true;
     state.sb.auth.onAuthStateChange((event, session) => {
       // po kliknięciu linku z maila usuwamy tokeny z paska adresu

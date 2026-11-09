@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Unbounded:wght@300;500;700&display=swap">
   <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach (ta sama liczba). -->
-  <link rel="stylesheet" href="styles.css?v=36">
+  <link rel="stylesheet" href="styles.css?v=37">
 </head>
 <body>
 <div class="wrap">
@@ -126,7 +126,7 @@
         <div class="field"><label class="req" for="i-start" data-i="fStart"></label><input id="i-start" type="date" required></div>
         <div class="field"><label for="i-end" data-i="fEnd"></label><input id="i-end" type="date"><span class="hint" data-i="hEnd"></span></div>
         <div class="field"><label class="req" for="i-city" data-i="fCity"></label><input id="i-city" list="cities" maxlength="60" required><span class="hint" id="geo-note" aria-live="polite"></span></div>
-        <div class="field"><label for="i-venue" data-i="fVenue"></label><input id="i-venue" maxlength="120"></div>
+        <div class="field"><label for="i-venue" data-i="fVenue"></label><input id="i-venue" maxlength="120" list="venue-list" autocomplete="off"><datalist id="venue-list"></datalist><span class="hint" data-i="hVenue"></span></div>
       </fieldset>
       <fieldset>
         <legend data-i="lgReg"></legend>
@@ -182,7 +182,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
-<script src="i18n.js?v=36"></script>
-<script src="app.js?v=34"></script>
+<script src="i18n.js?v=37"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>

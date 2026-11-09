@@ -287,7 +287,7 @@
   async function loadEvents() {
     if (DEMO || !state.sb) return;
     const { data, error } = await state.sb.from("events")
-      .select("id,title,type,date_start,date_end,city,venue,reg_url")
+      .select("id,title,type,date_start,date_end,city,venue,reg_url,studio_id")
       .eq("status", "approved").gte("date_end", todayISO())
       .order("date_start").limit(80);
     if (error) { console.warn("events:", error.message); return; }
@@ -531,7 +531,14 @@
     const links = [["website_url", t().website, "primary"], ["instagram_url", t().instagram, "ghost"], ["facebook_url", t().facebook, "ghost"]]
       .filter(([k]) => safeUrl(s[k]))
       .map(([k, label, kind]) => `<a class="btn ${kind}" href="${esc(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow">${esc(label)} ↗</a>`).join("");
-    const evs = state.events.filter((e) => cityKey(e.city) === cityKey(s.city)).slice(0, 4);
+    // najpierw wydarzenia w tym studiu; gdy ich brak, najbliższe w mieście
+    const atStudio = state.events.filter((e) => String(e.studio_id) === String(s.id));
+    const inCity = state.events.filter((e) => String(e.studio_id) !== String(s.id) && cityKey(e.city) === cityKey(s.city));
+    const evs = (atStudio.length ? atStudio : inCity).slice(0, 5);
+    const mine = state.user && String(s.created_by) === String(state.user.id);
+    const claim = s.status === "approved" && !mine && state.emailIds.has(String(s.id))
+      ? (state.user ? `<div class="empty" id="claim-box"><strong>${esc(t().claimOwnTitle)}</strong><p class="small">${esc(t().claimOwnText)}</p><button type="button" class="btn ghost" data-claim="${esc(s.id)}">${esc(t().claimOwnBtn)}</button></div>`
+        : `<p class="small">${esc(t().claimOwnLogin)} <a href="/account/">${esc(t().login)}</a></p>`) : "";
     const levels = (s.levels || []).map((l) => t().levels[l]).filter(Boolean);
     box.innerHTML = `<div>
         <div class="profile-top">
@@ -546,12 +553,14 @@
         ${state.emailIds.has(String(s.id)) ? `<div class="links" id="mail-${esc(s.id)}"><button type="button" class="btn ghost" data-showmail="${esc(s.id)}">${esc(t().showEmail)}</button></div>` : ""}
         <p class="small">${esc(t().noContactNote)}</p>
         ${s.source_name && safeUrl(s.source_url) ? `<p class="small">${esc(t().sourceLabel)} <a href="${esc(s.source_url)}" target="_blank" rel="noopener">${esc(s.source_name)} ↗</a></p>` : ""}
+        ${claim}
         ${s.verified ? "" : `<div class="empty"><strong>${esc(t().claimTitle)}</strong><p class="small">${esc(t().claimText)} <span style="user-select:all">${esc(t().claimMail)}</span></p></div>`}
         ${state.isAdmin && s.status === "approved" ? `<div class="form-actions"><button type="button" class="btn ghost" data-verify="${esc(s.id)}">${esc(s.verified ? t().unmarkVerified : t().markVerified)}</button><a class="btn ghost" href="/studios/edit/${esc(s.id)}">${esc(t().edit)}</a>${s.source_name ? `<button type="button" class="btn ghost" data-unsource="${esc(s.id)}">${esc(t().removeSource)}</button>` : ""}</div>` : ""}
       </div>
       <div>
-        <div class="linked"><h3>${esc(t().eventsHere(s.city))}</h3>
+        <div class="linked"><h3>${esc(atStudio.length ? t().eventsAtStudio : t().eventsHere(s.city))}</h3>
           ${evs.length ? evs.map(eventRow).join("") : `<p class="small">${esc(t().noEventsHere)}</p>`}
+          ${atStudio.length && inCity.length ? `<a class="small" href="${esc(CFG.eventsUrl)}/?city=${encodeURIComponent(s.city)}">${esc(t().moreInCity(s.city, inCity.length))}</a>` : ""}
           <a class="small" href="${esc(CFG.eventsUrl)}/#add" target="_blank" rel="noopener">${esc(t().addEventLink)} ↗</a>
         </div>
         <button type="button" class="btn ghost" id="close-profile" style="align-self:flex-start">${esc(t().closeProfile)}</button>
@@ -1257,6 +1266,12 @@
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
     else if (d.act) { state.filter.act = state.filter.act === d.act ? "" : d.act; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
+    else if (d.claim) {
+      const { data, error } = await state.sb.rpc("claim_studio", { sid: d.claim });
+      const box = $("claim-box");
+      if (error || data !== "ok") { if (box) box.insertAdjacentHTML("beforeend", `<p class="msg bad">${esc(t().claimOwnErr[data] || t().claimOwnErr.mismatch)}</p>`); return; }
+      await loadStudios(); route(); notice(t().claimOwnOk);
+    }
     else if (d.showmail) {
       const { data } = await state.sb.rpc("studio_email", { sid: d.showmail });
       const box = $("mail-" + d.showmail);

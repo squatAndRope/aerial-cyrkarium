@@ -21,6 +21,14 @@ DISC = {"hoop": "koło", "silks": "szarfy", "rope": "lina", "hammock": "hamak", 
 PROD = {"hoops": "koła", "silks": "szarfy i tkaniny", "frames": "ramy i stojaki", "rigging": "sprzęt do zawieszenia",
         "costumes": "stroje", "mats": "materace", "accessories": "akcesoria", "other": "inne"}
 written = set()
+# obrazki robimy od nowa tylko, gdy zmieniła się ich treść (nazwa, podpis, logo); dzięki temu
+# uruchomienie na innym komputerze (inna wersja Pillow) nie podmienia wszystkich plików
+MANIFEST = OUT / "og" / "manifest.json"
+try:
+    old_manifest = json.loads(MANIFEST.read_text())
+except Exception:
+    old_manifest = {}
+new_manifest = {}
 
 
 def font(name, size, weight):
@@ -113,6 +121,17 @@ def card(name, line2, logo):
     return buf.getvalue()
 
 
+def og_image(kind, slug, name, line2, logo_path):
+    key = f"{kind}/{slug}"
+    sig = json.dumps([name, line2, logo_path or "", 2], ensure_ascii=False)
+    path = OUT / "og" / kind / f"{slug}.jpg"
+    new_manifest[key] = sig
+    written.add(path)
+    if path.exists() and old_manifest.get(key) == sig:
+        return 0
+    return write(path, card(name, line2, logo_image(logo_path)))
+
+
 def short(text, n=155):
     t = re.sub(r"\s+", " ", text or "").strip()
     return t if len(t) <= n else t[: n - 1].rsplit(" ", 1)[0] + "…"
@@ -164,7 +183,7 @@ for s in studios:
     same = links(s.get("website_url"), s.get("instagram_url"), s.get("facebook_url"))
     if same:
         ld["sameAs"] = same
-    changed += write(OUT / "og" / "studios" / f"{slug}.jpg", card(s["name"], line2, logo_image(s.get("logo_path"))))
+    changed += og_image("studios", slug, s["name"], line2, s.get("logo_path"))
     changed += write(OUT / "studios" / f"{slug}.html",
                      page(f"{s['name']} · {s['city']} · Aerial w Polsce", desc, url, img, f"{s['name']}, {line2}", ld))
 
@@ -182,9 +201,11 @@ for m in makers:
     same = links(m.get("website_url"), m.get("shop_url"), m.get("instagram_url"), m.get("facebook_url"))
     if same:
         ld["sameAs"] = same
-    changed += write(OUT / "og" / "makers" / f"{slug}.jpg", card(m["name"], line2, logo_image(m.get("logo_path"))))
+    changed += og_image("makers", slug, m["name"], line2, m.get("logo_path"))
     changed += write(OUT / "makers" / f"{slug}.html",
                      page(f"{m['name']} · {m['city']} · Aerial w Polsce", desc, url, img, f"{m['name']}, {line2}", ld))
+
+changed += write(MANIFEST, (json.dumps(new_manifest, ensure_ascii=False, indent=0, sort_keys=True) + "\n").encode())
 
 # pliki po usuniętych albo przemianowanych wpisach
 removed = 0

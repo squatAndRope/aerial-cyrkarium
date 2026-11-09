@@ -487,3 +487,12 @@ legend { font-family: var(--font-display); font-weight: 700; font-size: 17px; ma
 .stamp { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .admin-search { width: 100%; margin-bottom: 12px; }
 .admin-search { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; background: var(--surface); min-height: 44px; }
+
+/* ramka studia przy wydarzeniu (link do profilu w zakładce Studia) */
+.studio-chip { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line, #E4DFF0); border-radius: 10px; text-decoration: none; color: inherit; }
+.studio-chip:hover { border-color: currentColor; }
+.sc-logo { width: 32px; height: 32px; flex: none; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #CAC2DF; color: #4B3373; font-weight: 600; font-size: 14px; }
+.sc-logo img { width: 100%; height: 100%; object-fit: cover; background: #FFFFFF; }
+.sc-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.sc-txt small { opacity: .75; }
+.sc-go { font-size: 12px; white-space: nowrap; }
