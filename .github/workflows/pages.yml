@@ -1,0 +1,47 @@
+# Aerial · automatyczne odświeżanie stron profili, obrazków podglądu i mapy strony
+#
+# Co 6 godzin, po każdej zmianie strony (push na main) i na żądanie (Actions → Run workflow):
+#   tools/sitemap.py    → sitemap.xml
+#   tools/prerender.py  → p/studios/*.html, p/makers/*.html, p/og/**/*.jpg
+# Jeśli coś się zmieniło, robi commit na main; Hostinger wdraża go jak zwykle.
+# Commit zrobiony przez GitHub Actions nie uruchamia tego zadania ponownie (bez pętli).
+# Klucz Supabase jest publiczny i leży w config.js, więc żadne sekrety nie są potrzebne.
+name: Strony profili
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  push:
+    branches: [main]
+    paths-ignore:
+      - "p/**"
+      - "sitemap.xml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow==11.3.0
+      - run: python tools/sitemap.py
+      - run: python tools/prerender.py
+      - name: Commit
+        run: |
+          git add -A p sitemap.xml
+          if git diff --cached --quiet; then echo "Bez zmian."; exit 0; fi
+          git config user.name "aerial-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Odświeżone strony profili i mapa strony"
+          git pull --rebase origin main
+          git push origin HEAD:main

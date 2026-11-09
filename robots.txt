@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /account/
+Disallow: /p/studios/
+Disallow: /p/makers/
 Disallow: /admin
 Disallow: /studios/add/
 Disallow: /studios/edit/

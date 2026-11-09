@@ -4,6 +4,7 @@ Options -Indexes
 RedirectMatch 404 /\.git
 RedirectMatch 404 ^/supabase(/|$)
 RedirectMatch 404 ^/tools(/|$)
+RedirectMatch 404 ^/\.github(/|$)
 RedirectMatch 404 (?i)^/readme\.md$
 RedirectMatch 404 ^/\.gitignore$
 RedirectMatch 404 ^/\.htaccess$
@@ -23,4 +24,8 @@ RedirectMatch 301 ^/moje(/.*)?$ /account/
 # która czyta adres i pokazuje właściwy widok. /calendar/ to prawdziwy folder.
 # Nazwy ścieżek są po angielsku i wspólne dla wszystkich wersji językowych.
 RewriteEngine On
+# Profil studia lub producenta z gotową stroną (p/…, robi ją tools/prerender.py): ta sama aplikacja,
+# ale z nazwą, opisem i obrazkiem w nagłówku, żeby podgląd linku i Google widziały konkretne studio.
+RewriteCond %{DOCUMENT_ROOT}/p/$1.html -f
+RewriteRule ^((?:studios|makers)/[a-z0-9-]+)/?$ /p/$1.html [L]
 RewriteRule ^(studios|board|makers|account|admin)(/.*)?$ /index.html [L]
