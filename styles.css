@@ -291,6 +291,9 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 
 /* ---------- 14. Open training i wynajem ---------- */
 .tag-extra { background: var(--ok-soft); color: var(--ok); }
+.tag.soft { background: transparent; border: 1px solid var(--line); color: var(--muted, inherit); }
+.act-chips { align-items: center; margin-top: 6px; }
+.act-chips .chip { padding: 4px 11px; font-size: 13px; }
 
 /* ---------- 15. Producenci ---------- */
 .dot-mak { background: #EE9FCB; }

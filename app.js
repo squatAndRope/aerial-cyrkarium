@@ -163,7 +163,7 @@
     studios: [],        // wszystko, co baza pozwala przeczytać tej osobie
     events: [],         // nadchodzące, zatwierdzone wydarzenia z Aerial Events
     loaded: false, loadFailed: false,
-    filter: { disc: "all", q: "", level: "", kids: false, open: false, rental: false },
+    filter: { disc: "all", act: "", q: "", level: "", kids: false, open: false, rental: false },
     current: null,      // id otwartego profilu
     listings: [],       // ogłoszenia, które baza pozwala przeczytać tej osobie
     stats: {},          // liczba wiadomości przy moich ogłoszeniach
@@ -413,6 +413,7 @@
   function matches(s) {
     const f = state.filter;
     if (f.disc !== "all" && !(s.disciplines || []).includes(f.disc)) return false;
+    if (f.act && !(s.activities || []).includes(f.act)) return false;
     if (f.level && !(s.levels || []).includes(f.level)) return false;
     if (f.kids && !s.kids) return false;
     if (f.open && !s.open_training) return false;
@@ -428,6 +429,9 @@
     const D = t().disciplines;
     $("disc-chips").innerHTML = [["all", t().all], ...Object.entries(D)]
       .map(([k, v]) => `<button type="button" class="chip" data-disc="${k}" aria-pressed="${state.filter.disc === k}">${esc(v)}</button>`).join("");
+    // drugi, mniejszy rząd: zajęcia poza aerialem (kliknięcie w zaznaczony odznacza)
+    $("act-chips").innerHTML = `<span class="small muted">${esc(t().actsLabel)}</span>` + Object.entries(t().activities)
+      .map(([k, v]) => `<button type="button" class="chip" data-act="${k}" aria-pressed="${state.filter.act === k}">${esc(v)}</button>`).join("");
     const sel = $("f-level");
     sel.innerHTML = `<option value="">${esc(t().anyLevel)}</option>` + Object.entries(t().levels).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
     sel.value = state.filter.level;
@@ -524,8 +528,8 @@
           <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
         </div>
         <div class="profile-title">${logoImg(s.logo_path, s.name, "logo big")}<h2>${esc(s.name)}</h2></div>
-        ${s.description ? `<p>${esc(s.description)}</p>` : ""}
-        <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}</div>
+        ${s.description ? `<p>${esc(s.description)}</p>` : `<p class="muted">${esc(t().noDesc)}</p>`}
+        <div class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${levels.map((l) => `<span class="tag">${esc(l)}</span>`).join("")}${s.kids ? `<span class="tag">${esc(t().kids)}</span>` : ""}${s.open_training ? `<span class="tag">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag">${esc(t().rentalTag)}</span>` : ""}${(s.activities || []).map((a) => `<span class="tag soft">${esc(t().activities[a] || a)}</span>`).join("")}</div>
         ${links ? `<div class="links">${links}</div>` : ""}
         ${state.emailIds.has(String(s.id)) ? `<div class="links" id="mail-${esc(s.id)}"><button type="button" class="btn ghost" data-showmail="${esc(s.id)}">${esc(t().showEmail)}</button></div>` : ""}
         <p class="small">${esc(t().noContactNote)}</p>
@@ -879,7 +883,8 @@
         <label class="toggle"><input type="checkbox" id="s-open"${v.open_training ? " checked" : ""}> <span>${esc(t().fOpen)}</span></label>
         <label class="toggle"><input type="checkbox" id="s-rental"${v.rental ? " checked" : ""}> <span>${esc(t().fRental)}</span></label>
       </div>
-      <div class="field"><label for="s-desc">${esc(t().fDesc)}</label><textarea id="s-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().fDescHint)}</p></div>
+      <div class="field"><span class="label">${esc(t().fActs)}</span>${checks("act", t().activities, v.activities)}</div>
+      <div class="field"><label class="req" for="s-desc">${esc(t().fDesc)}</label><textarea id="s-desc" maxlength="1200">${esc(v.description)}</textarea><p class="hint">${esc(t().fDescHint)}</p></div>
       <div id="desc-alert"></div>
       ${logoField("s", v.logo_path, v.name)}
       <div class="field"><label for="s-web">${esc(t().fWebsite)}</label><input id="s-web" type="url" inputmode="url" placeholder="https://" value="${esc(v.website_url)}"></div>
@@ -908,12 +913,13 @@
     $("studio-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = $("form-msg");
+      msg.innerHTML = "";
       const val = (id) => $(id).value.trim();
       const picked = (name) => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((i) => i.value);
       const row = {
         name: val("s-name"), city: val("s-city"), address: val("s-address") || null,
         disciplines: picked("disc"), levels: picked("lvl"), kids: $("s-kids").checked,
-        open_training: $("s-open").checked, rental: $("s-rental").checked, submitted_by_owner: $("s-owner").checked,
+        open_training: $("s-open").checked, rental: $("s-rental").checked, submitted_by_owner: $("s-owner").checked, activities: picked("act"),
         description: val("s-desc") || null,
         website_url: val("s-web") || null, instagram_url: cleanSocial(val("s-ig")), facebook_url: cleanSocial(val("s-fb")),
       };
@@ -921,6 +927,10 @@
       const fail = (text) => { msg.innerHTML = `<p class="msg bad" role="alert">${esc(text)}</p>`; };
       if (row.name.length < 2 || row.city.length < 2 || !row.disciplines.length || !urls.length) return fail(t().errRequired);
       if (urls.some((u) => !/^https:\/\/[^\s.]+\.[^\s]+$/i.test(u))) return fail(t().errUrl);
+      const host = (u) => { try { return new URL(u).hostname.toLowerCase(); } catch { return ""; } };
+      if ((row.instagram_url && !/(^|\.)instagram\.com$/.test(host(row.instagram_url)))
+        || (row.facebook_url && !/(^|\.)(facebook\.com|fb\.com|fb\.me)$/.test(host(row.facebook_url)))) return fail(t().errSocial);
+      if ((row.description || "").length < 30) return fail(t().errDesc);
       if (!checkDesc()) return fail(t().errContactStudio(contactInText(row.description).join(t().and)));
       const inAddress = contactInText((row.address || "") + " " + row.name);
       if (inAddress.length) return fail(t().errContactStudio(inAddress.join(t().and)));
@@ -1171,6 +1181,7 @@
     if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.disc) { state.filter.disc = d.disc; renderStudios(); }
+    else if (d.act) { state.filter.act = state.filter.act === d.act ? "" : d.act; renderStudios(); }
     else if (d.st) { map?.closePopup(); openStudio(d.st); }
     else if (d.showmail) {
       const { data } = await state.sb.rpc("studio_email", { sid: d.showmail });
