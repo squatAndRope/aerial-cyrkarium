@@ -203,6 +203,15 @@
     { id: "l6", category: "gear", kind: "give", title: "Oddam kostium startowy, rozmiar S (przykład)", description: "Fioletowy, z cekinami, używany na dwóch zawodach.", city: "Wrocław", nick: "Kasia", price: null, status: "approved", created_at: inDays(-3), expires_at: inDays(57) },
   ];
   const publicStudios = () => state.studios.filter((s) => s.status === "approved" && s.lat != null);
+  // strony miast: /studios/krakow (adres = slug nazwy miasta; profile mają zawsze nazwę + miasto, więc się nie mylą)
+  const citySlug = (c) => slugify(c);
+  const cityPath = (c) => `/studios/${citySlug(c)}`;
+  function cityList() {
+    const m = new Map();
+    publicStudios().forEach((s) => { const k = citySlug(s.city); if (!k) return; const x = m.get(k) || { name: s.city, n: 0 }; x.n++; m.set(k, x); });
+    return [...m.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, "pl"));
+  }
+  const cityBySlug = (slug) => cityList().find((c) => citySlug(c.name) === slug)?.name || null;
 
   const DEMO_STUDIOS = [
     { id: "d1", name: "Studio Orbita (przykład)", city: "Warszawa", address: "ul. Przykładowa 1", lat: 52.19, lng: 21.0, disciplines: ["hoop", "silks", "hammock"], levels: ["beginner", "intermediate", "advanced"], kids: true, open_training: true, rental: true, verified: true, description: "Dwie sale, 9 punktów zawieszenia, wysokość 7 m. Open training w niedziele.", website_url: "https://example.com", instagram_url: "https://instagram.com/", status: "approved" },
@@ -404,7 +413,10 @@
     else if (view === "studia") {
       const st = id ? findStudio(id) : null;
       state.current = st ? st.id : null;
+      // nie studio? może miasto (/studios/krakow)
+      state.city = !st && id ? cityBySlug(id) : (st ? state.city : null);
       if (st) { title = st.name; if (location.pathname !== studioPath(st)) history.replaceState(null, "", studioPath(st) + keep); }
+      else if (state.city) title = t().cityTitle(state.city);
       renderStudios();
     }
     else if (view === "ogloszenia") renderBoard();
@@ -437,6 +449,7 @@
   // ---------------- 4. Studia ----------------
   function matches(s) {
     const f = state.filter;
+    if (state.city && cityKey(s.city) !== cityKey(state.city)) return false;
     if (f.disc !== "all" && !(s.disciplines || []).includes(f.disc)) return false;
     if (f.act && !(s.activities || []).includes(f.act)) return false;
     if (f.level && !(s.levels || []).includes(f.level)) return false;
@@ -471,7 +484,18 @@
     renderFilters();
     const all = publicStudios();
     const list = all.filter(matches);
-    $("studios-count").textContent = state.loadFailed ? t().loadError : t().studiosCount(all.length, new Set(all.map((s) => cityKey(s.city))).size);
+    const inCity = state.city ? all.filter((s) => cityKey(s.city) === cityKey(state.city)) : null;
+    $("studios-title").textContent = state.city ? t().cityHeading(state.city) : t().studiosTitle;
+    $("studios-count").innerHTML = state.loadFailed ? esc(t().loadError)
+      : state.city ? `${esc(t().cityCount(inCity.length))} <a href="/studios/">${esc(t().allCitiesLink)}</a>`
+      : esc(t().studiosCount(all.length, new Set(all.map((s) => cityKey(s.city))).size));
+    // wydarzenia w mieście (tylko na stronie miasta)
+    const cityEv = state.city ? state.events.filter((e) => cityKey(e.city) === cityKey(state.city)).slice(0, 4) : [];
+    $("city-events").hidden = !cityEv.length;
+    $("city-events").innerHTML = cityEv.length ? `<h3>${esc(t().eventsHere(state.city))}</h3>${cityEv.map(eventRow).join("")}` : "";
+    // linki do stron miast pod listą (pomagają też Google znaleźć te strony)
+    const cities = cityList();
+    $("city-links").innerHTML = cities.length ? `<h3>${esc(t().byCity)}</h3><div class="chips">${cities.map((c) => `<a class="chip" href="${esc(cityPath(c.name))}" aria-current="${state.city && cityKey(c.name) === cityKey(state.city)}">${esc(c.name)} <span class="muted">${c.n}</span></a>`).join("")}</div>` : "";
 
     const box = $("studio-list");
     if (!state.loaded) box.innerHTML = "";
@@ -559,7 +583,7 @@
         <div class="profile-top">
           ${s.verified ? `<span class="badge ok">${esc(t().verified)}</span>` : `<span class="badge warn">${esc(t().community)}</span>`}
           ${s.status !== "approved" ? `<span class="badge bad">${esc(t().status[s.status])}</span>` : ""}
-          <span class="small">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
+          <span class="small"><a href="${esc(cityPath(s.city))}">${esc(s.city)}</a>${s.address ? " · " + esc(s.address) : ""}</span>
         </div>
         <div class="profile-title">${logoImg(s.logo_path, s.name, "logo big")}<h2>${esc(s.name)}</h2></div>
         ${s.description ? `<p>${esc(s.description)}</p>` : `<p class="muted">${esc(t().noDesc)}</p>`}

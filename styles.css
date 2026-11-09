@@ -354,3 +354,11 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .ph-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .ph-row img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; display: block; }
 #f-photo-add { align-self: flex-start; width: auto; }
+
+/* strony miast: wydarzenia w mieście i linki do miast pod listą studiów */
+.city-events { margin-top: 18px; }
+.city-links { margin-top: 22px; }
+.city-links h3 { font-size: 15px; margin-bottom: 8px; }
+.city-links .chip { text-decoration: none; color: inherit; display: inline-flex; gap: 6px; align-items: center; }
+.city-links .chip[aria-current="true"] { background: var(--plum); border-color: var(--plum); color: #FFFFFF; }
+.city-links .chip[aria-current="true"] .muted { color: inherit; opacity: .8; }

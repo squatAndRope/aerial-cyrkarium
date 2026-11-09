@@ -36,6 +36,16 @@ def unique(rows, x, extra_of):
     return f"{base}{'-' + ex if ex else ''}-{x['id'][:8]}" if clash else f"{base}-{ex}"
 
 
+def cities(studios):
+    """Miasta ze studiami: [(slug, nazwa, [studia])], najwięcej studiów najpierw (jak cityList w app.js)."""
+    m = {}
+    for s in studios:
+        k = slugify(s["city"])
+        if k:
+            m.setdefault(k, [s["city"], []])[1].append(s)
+    return sorted(((k, v[0], v[1]) for k, v in m.items()), key=lambda x: (-len(x[2]), x[1]))
+
+
 def studio_slug(rows, s):
     return unique(rows, s, lambda y: y.get("address"))
 

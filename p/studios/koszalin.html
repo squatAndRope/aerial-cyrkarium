@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Studia aerial: Koszalin (1) · Aerial w Polsce</title>
+  <meta name="description" content="1 studio aerial w mieście Koszalin: szarfy, koło, hamak. My Gymnastics. Mapa studiów, open training, wynajem sali i wydarzenia.">
+  <!-- podgląd linku (Facebook, WhatsApp, Instagram, Messenger) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Aerial w Polsce · Fundacja Cyrkarium">
+  <meta property="og:title" content="Studia aerial: Koszalin (1) · Aerial w Polsce">
+  <meta property="og:description" content="1 studio aerial w mieście Koszalin: szarfy, koło, hamak. My Gymnastics. Mapa studiów, open training, wynajem sali i wydarzenia.">
+  <meta property="og:image" content="https://aerial.cyrkarium.com/p/og/cities/koszalin.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Koszalin: 1 studio aerial">
+  <meta property="og:locale" content="pl_PL">
+  <meta property="og:locale:alternate" content="en_GB">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%234B3373' d='M50 0C55 32 68 45 100 50C68 55 55 68 50 100C45 68 32 55 0 50C32 45 45 32 50 0Z'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Unbounded:wght@300;500&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach.
+       Ścieżki zaczynają się od /, bo ta sama strona obsługuje też /studios/…, /board/…, /makers/… i /account/ (.htaccess). -->
+  <link rel="stylesheet" href="/styles.css?v=18">
+  <link rel="canonical" id="canonical" href="https://aerial.cyrkarium.com/studios/koszalin">
+  <meta property="og:url" content="https://aerial.cyrkarium.com/studios/koszalin">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "ItemList", "name": "Studia aerial: Koszalin", "url": "https://aerial.cyrkarium.com/studios/koszalin", "numberOfItems": 1, "itemListElement": [{"@type": "ListItem", "position": 1, "name": "My Gymnastics", "url": "https://aerial.cyrkarium.com/studios/my-gymnastics-koszalin"}]}</script>
+  <!-- wygenerowane przez tools/prerender.py, nie edytuj ręcznie -->
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <svg class="masthead-star" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 0C55 32 68 45 100 50C68 55 55 68 50 100C45 68 32 55 0 50C32 45 45 32 50 0Z"/></svg>
+    <div class="masthead-inner">
+      <header class="top">
+        <a class="brand" href="/">
+          <span class="mark" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M50 0C55 32 68 45 100 50C68 55 55 68 50 100C45 68 32 55 0 50C32 45 45 32 50 0Z"/></svg></span>
+          <span class="brand-text">
+            <span class="eyebrow">Fundacja Cyrkarium</span>
+            <span class="brand-name" data-i="brand"></span>
+          </span>
+        </a>
+        <div class="top-actions">
+          <div class="account" id="account"></div>
+          <div class="lang" role="group" data-aria="ariaLang">
+            <button type="button" data-lang="pl">PL</button>
+            <button type="button" data-lang="en">EN</button>
+          </div>
+        </div>
+      </header>
+      <nav class="sections" role="tablist" data-aria="ariaSections">
+        <a role="tab" href="/calendar/" data-view="calendar"><span class="dot dot-cal" aria-hidden="true"></span><span data-i="tabCalendar"></span></a>
+        <a role="tab" href="/studios/" data-view="studios"><span class="dot dot-map" aria-hidden="true"></span><span data-i="tabStudios"></span></a>
+        <a role="tab" href="/board/" data-view="board"><span class="dot dot-mkt" aria-hidden="true"></span><span data-i="tabBoard"></span></a>
+        <a role="tab" href="/makers/" data-view="makers"><span class="dot dot-mak" aria-hidden="true"></span><span data-i="tabMakers"></span></a>
+      </nav>
+    </div>
+  </div>
+
+  <div id="notice" aria-live="polite"></div>
+
+  <!-- STRONA GŁÓWNA -->
+  <section id="view-home" class="view" hidden>
+    <div class="lead">
+      <div class="lead-text">
+        <h1 data-i="homeTitle"></h1>
+        <p class="muted" data-i="homeLede"></p>
+      </div>
+    </div>
+    <div class="trio">
+      <a class="tile t-cal" href="/calendar/">
+        <span class="num" id="n-events">–</span>
+        <h2 data-i="tileCal"></h2>
+        <p data-i="tileCalText"></p>
+        <span class="tile-cta" data-i="tileCalCta"></span>
+      </a>
+      <a class="tile t-map" href="/studios/">
+        <span class="num" id="n-studios">–</span>
+        <h2 data-i="tileStudios"></h2>
+        <p data-i="tileStudiosText"></p>
+        <span class="tile-cta" data-i="tileStudiosCta"></span>
+      </a>
+      <a class="tile t-mkt" href="/board/">
+        <span class="num" id="n-listings">–</span>
+        <h2 data-i="tileBoard"></h2>
+        <p data-i="tileBoardText"></p>
+        <span class="tile-cta" data-i="tileBoardCta"></span>
+      </a>
+      <a class="tile t-mak" href="/makers/">
+        <span class="num" id="n-makers">–</span>
+        <h2 data-i="tileMakers"></h2>
+        <p data-i="tileMakersText"></p>
+        <span class="tile-cta" data-i="tileMakersCta"></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- STUDIA -->
+  <section id="view-studia" class="view" hidden>
+    <div class="lead">
+      <div class="lead-text">
+        <h1 id="studios-title" data-i="studiosTitle"></h1>
+        <p id="studios-count" class="muted"></p>
+      </div>
+      <a class="btn primary" href="/studios/add/" data-i="addStudio"></a>
+    </div>
+    <div class="filters">
+      <div class="chips" id="disc-chips"></div>
+      <div class="chips act-chips" id="act-chips"></div>
+      <div class="filters-row">
+        <input id="f-q" type="search" data-ph="searchStudios" data-aria="searchStudios" autocomplete="off">
+        <select id="f-level" data-aria="ariaLevel"></select>
+        <label class="toggle"><input type="checkbox" id="f-kids"> <span data-i="kidsOnly"></span></label>
+        <label class="toggle"><input type="checkbox" id="f-open"> <span data-i="openOnly"></span></label>
+        <label class="toggle"><input type="checkbox" id="f-rental"> <span data-i="rentalOnly"></span></label>
+        <label class="toggle"><input type="checkbox" id="f-birthdays"> <span data-i="birthdaysOnly"></span></label>
+      </div>
+    </div>
+    <div class="explore">
+      <div class="mapbox"><div id="map" role="region" data-aria="ariaMap"></div></div>
+      <div class="list" id="studio-list"></div>
+    </div>
+    <div class="linked city-events" id="city-events" hidden></div>
+    <nav class="city-links" id="city-links" aria-label="Miasta"></nav>
+    <section class="profile" id="studio-profile" hidden></section>
+  </section>
+
+  <!-- DODAJ / EDYTUJ STUDIO -->
+  <section id="view-dodaj-studio" class="view" hidden>
+    <div id="add-box"></div>
+  </section>
+
+  <!-- UKRYTY PANEL ADMINA: logowanie hasłem (adres /admin, nie ma do niego linku) -->
+  <section id="view-admin" class="view" hidden>
+    <div id="admin-box"></div>
+  </section>
+
+  <!-- MOJE STUDIA I MODERACJA -->
+  <section id="view-moje" class="view" hidden>
+    <div id="mine-box"></div>
+  </section>
+
+  <!-- OGŁOSZENIA -->
+  <section id="view-ogloszenia" class="view mkt" hidden>
+    <div class="lead">
+      <div class="lead-text">
+        <h1 data-i="boardTitle"></h1>
+        <p class="muted" data-i="boardLede"></p>
+      </div>
+      <a class="btn primary" href="/board/add/" data-i="addListing"></a>
+    </div>
+    <ul class="promise">
+      <li data-i="boardP1"></li>
+      <li data-i="boardP2"></li>
+      <li data-i="boardP3"></li>
+    </ul>
+    <div class="filters">
+      <div class="chips" id="cat-chips"></div>
+      <div class="chips kind-chips" id="kind-chips" hidden></div>
+      <div class="filters-row">
+        <input id="l-q" type="search" data-ph="searchListings" data-aria="searchListings" autocomplete="off">
+      </div>
+    </div>
+    <div class="board" id="listing-grid"></div>
+    <ol class="how">
+      <li data-i="how1"></li>
+      <li data-i="how2"></li>
+      <li data-i="how3"></li>
+    </ol>
+  </section>
+
+  <!-- PRODUCENCI -->
+  <section id="view-makers" class="view mak" hidden>
+    <div class="lead">
+      <div class="lead-text">
+        <h1 data-i="makersTitle"></h1>
+        <p id="makers-count" class="muted"></p>
+      </div>
+      <a class="btn primary" href="/makers/add/" data-i="addMaker"></a>
+    </div>
+    <div class="filters">
+      <div class="chips" id="prod-chips"></div>
+      <div class="filters-row">
+        <input id="m-q" type="search" data-ph="searchMakers" data-aria="searchMakers" autocomplete="off">
+        <label class="toggle"><input type="checkbox" id="m-custom"> <span data-i="customOnly"></span></label>
+        <label class="toggle"><input type="checkbox" id="m-abroad"> <span data-i="abroadOnly"></span></label>
+      </div>
+    </div>
+    <div class="board" id="maker-grid"></div>
+  </section>
+
+  <!-- JEDEN PRODUCENT -->
+  <section id="view-maker" class="view mak" hidden>
+    <div id="maker-box"></div>
+  </section>
+
+  <!-- DODAJ / EDYTUJ PRODUCENTA -->
+  <section id="view-dodaj-producenta" class="view mak" hidden>
+    <div id="maker-form-box"></div>
+  </section>
+
+  <!-- JEDNO OGŁOSZENIE -->
+  <section id="view-ogloszenie" class="view mkt" hidden>
+    <div id="listing-box"></div>
+  </section>
+
+  <!-- DODAJ / EDYTUJ OGŁOSZENIE -->
+  <section id="view-dodaj-ogloszenie" class="view mkt" hidden>
+    <div id="listing-form-box"></div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-inner">
+      <span data-i="footer"></span>
+      <span class="foot-links">
+        <a href="https://cyrkarium.com" target="_blank" rel="noopener">cyrkarium.com</a>
+        <a id="foot-privacy" href="/polityka-prywatnosci.html" data-i="privacy"></a>
+      </span>
+    </div>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/config.js"></script>
+<script src="/i18n.js?v=23"></script>
+<script src="/app.js?v=29"></script>
+<!-- statystyki odwiedzin bez cookies (GoatCounter, panel: aerial-cyrkarium.goatcounter.com) -->
+<script data-goatcounter="https://aerial-cyrkarium.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

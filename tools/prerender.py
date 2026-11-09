@@ -11,7 +11,7 @@
 # i po każdej zmianie strony. Ręcznie:  python3 tools/prerender.py   (potrzebny Pillow)
 import html, io, json, re, urllib.request
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from common import ROOT, SITE, URL, get, studio_slug, maker_slug
+from common import ROOT, SITE, URL, get, studio_slug, maker_slug, cities
 
 OUT = ROOT / "p"
 FONTS = ROOT / "tools" / "fonts"
@@ -186,6 +186,37 @@ for s in studios:
     changed += og_image("studios", slug, s["name"], line2, s.get("logo_path"))
     changed += write(OUT / "studios" / f"{slug}.html",
                      page(f"{s['name']} · {s['city']} · Aerial w Polsce", desc, url, img, f"{s['name']}, {line2}", ld))
+
+# strony miast: /studios/krakow
+def plural_pl(n, one, few, many):
+    if n == 1:
+        return one
+    return few if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14 else many
+
+
+studio_slugs = {studio_slug(studios, s) for s in studios}
+for cslug, cname, rows in cities([s for s in studios if s.get("lat") is not None]):
+    if cslug in studio_slugs or cslug in ("add", "edit"):
+        print("  pominięte miasto (adres zajęty):", cslug)
+        continue
+    n = len(rows)
+    url = f"{SITE}/studios/{cslug}"
+    disc = []
+    for s in rows:
+        for k in s.get("disciplines") or []:
+            if DISC.get(k, k) not in disc:
+                disc.append(DISC.get(k, k))
+    names = ", ".join(s["name"] for s in rows[:2]) + (" i inne" if n > 2 else "")
+    count = f"{n} {plural_pl(n, 'studio', 'studia', 'studiów')} aerial"
+    desc = short(f"{count} w mieście {cname}: {', '.join(disc[:5])}. {names}. Mapa studiów, open training, wynajem sali i wydarzenia.", 200)
+    img = f"{SITE}/p/og/cities/{cslug}.jpg"
+    ld = {"@context": "https://schema.org", "@type": "ItemList", "name": f"Studia aerial: {cname}", "url": url,
+          "numberOfItems": n,
+          "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": s["name"],
+                               "url": f"{SITE}/studios/{studio_slug(studios, s)}"} for i, s in enumerate(rows)]}
+    changed += og_image("cities", cslug, cname, count + (" · " + ", ".join(disc[:4]) if disc else ""), None)
+    changed += write(OUT / "studios" / f"{cslug}.html",
+                     page(f"Studia aerial: {cname} ({n}) · Aerial w Polsce", desc, url, img, f"{cname}: {count}", ld))
 
 makers = get("makers", "id,name,city,products,description,website_url,shop_url,instagram_url,facebook_url,logo_path")
 for m in makers:
