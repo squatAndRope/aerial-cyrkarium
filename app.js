@@ -401,7 +401,11 @@
     else if (view === "moje") renderMine();
     else if (view === "admin") renderAdminLogin();
     // adres kanoniczny = bieżąca ścieżka (bez ?demo i #), żeby Google nie dublował stron
-    const canon = $("canonical"); if (canon) canon.href = "https://aerial.cyrkarium.com" + location.pathname;
+    // Adres kanoniczny dodaje dopiero skrypt, dla bieżącej podstrony. W samym index.html go nie ma,
+    // bo ten sam plik obsługuje wszystkie adresy i Google brał każdy profil za kopię strony głównej.
+    let canon = $("canonical");
+    if (!canon) { canon = document.createElement("link"); canon.rel = "canonical"; canon.id = "canonical"; document.head.appendChild(canon); }
+    canon.href = "https://aerial.cyrkarium.com" + location.pathname;
     document.title = view === "home" ? `${t().brand} · Fundacja Cyrkarium` : `${title} · ${t().brand}`;
   }
 
