@@ -30,7 +30,8 @@
     if (q && TEXTS[q]) return q;
     const s = store.get("ac-lang");
     if (s && TEXTS[s]) return s;
-    return (navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+    const nav = (navigator.language || "pl").toLowerCase();
+    return nav.startsWith("pl") ? "pl" : nav.startsWith("uk") ? "uk" : "en";
   })();
   const t = () => TEXTS[lang];
 
@@ -38,7 +39,9 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const cityKey = (c) => (c || "").toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/\s+/g, " ");
   const todayISO = () => new Date().toLocaleDateString("sv-SE");
-  const privacyHref = () => "/polityka-prywatnosci.html" + (lang === "en" ? "#en" : "");
+  const privacyHref = () => "/polityka-prywatnosci.html" + (lang === "pl" ? "" : "#en"); // ukraińskiej wersji polityki jeszcze nie ma
+  // baza przyjmuje w polu lang tylko pl / en (wiadomości, zgłoszenia), ukraiński zapisujemy jako en
+  const dbLang = () => (lang === "pl" ? "pl" : "en");
   const privacyLink = () => ` <a href="${privacyHref()}" target="_blank" rel="noopener">${esc(t().privacy)}</a>`;
   const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? u : null);
 
@@ -326,7 +329,7 @@
     if (!reasons.length && (message || "").length < 5) return say("bad", t().reportErrEmpty);
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say("bad", t().reportErrEmail);
     if (DEMO) return say("ok", t().reportThanks + " (demo)");
-    const row = { reasons, message, email, lang, [f.dataset.rkind === "maker" ? "maker_id" : "studio_id"]: f.dataset.rid };
+    const row = { reasons, message, email, lang: dbLang(), [f.dataset.rkind === "maker" ? "maker_id" : "studio_id"]: f.dataset.rid };
     const btn = f.querySelector('button[type="submit"]'); btn.disabled = true;
     const { error } = await state.sb.from("entry_reports").insert(row);
     btn.disabled = false;
@@ -760,7 +763,7 @@
       e.preventDefault();
       const st = $("m-status");
       const fail = (m) => { st.innerHTML = `<p class="msg bad" role="alert">${esc(m)}</p>`; };
-      const row = { listing_id: l.id, sender_name: $("m-name").value.trim(), sender_email: $("m-mail").value.trim(), message: $("m-text").value.trim(), consent: $("m-ok").checked, lang };
+      const row = { listing_id: l.id, sender_name: $("m-name").value.trim(), sender_email: $("m-mail").value.trim(), message: $("m-text").value.trim(), consent: $("m-ok").checked, lang: dbLang() };
       if (!row.sender_name || !row.sender_email || row.message.length < 5 || !row.consent) return fail(t().mErrRequired);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.sender_email)) return fail(t().mErrEmail);
       const btn = $("m-send"); btn.disabled = true;

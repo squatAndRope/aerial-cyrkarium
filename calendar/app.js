@@ -26,8 +26,9 @@
   // język: zapamiętany wybór, a jeśli go nie ma, język przeglądarki
   function detectLang() {
     const saved = store.get("ac-lang");
-    if (saved === "pl" || saved === "en") return saved;
-    return (navigator.language || "pl").toLowerCase().startsWith("pl") ? "pl" : "en";
+    if (saved === "pl" || saved === "en" || saved === "uk") return saved;
+    const nav = (navigator.language || "pl").toLowerCase();
+    return nav.startsWith("pl") ? "pl" : nav.startsWith("uk") ? "uk" : "en";
   }
   let lang = detectLang();
   const t = () => TEXTS[lang]; // t().klucz → tekst w bieżącym języku
@@ -37,7 +38,7 @@
   const safeUrl = (u) => (typeof u === "string" && /^https?:\/\/[^\s/]+\.[^\s]+/i.test(u.trim())) ? u.trim() : null;
   const todayISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   const parseD = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
-  const loc = () => (lang === "pl" ? "pl-PL" : "en-GB");
+  const loc = () => (lang === "pl" ? "pl-PL" : lang === "uk" ? "uk-UA" : "en-GB");
   const fmt = (opts, s) => new Intl.DateTimeFormat(loc(), opts).format(parseD(s));
   const monthShort = (iso) => fmt({ month: "short" }, iso).replace(".", "");
   const weekdayShort = (iso) => fmt({ weekday: "short" }, iso);
@@ -78,6 +79,7 @@
     document.querySelectorAll("[data-aria]").forEach((n) => { n.setAttribute("aria-label", t()[n.dataset.aria]); });
     $("lang-pl").setAttribute("aria-pressed", String(lang === "pl"));
     $("lang-en").setAttribute("aria-pressed", String(lang === "en"));
+    $("lang-uk").setAttribute("aria-pressed", String(lang === "uk"));
     fillSelect($("i-type"), TYPES.map((k) => [k, t().types[k]]), true);
     fillSelect($("i-level"), LEVELS.map((k) => [k, t().levels[k]]), true);
     renderLevelChips();
