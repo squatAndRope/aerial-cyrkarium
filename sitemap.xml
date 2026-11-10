@@ -123,6 +123,7 @@
   <url><loc>https://aerial.cyrkarium.com/studios/pole-by-daria-tarnow-tarnow</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/pole-dance-house-wroclaw</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/pole-flow-dance-studio-poznan</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/polektyw-gdansk</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/powerstudio-chrzanow</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/przestrzen-lotu-starachowice</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/przystan-kolobrzeg</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
@@ -154,34 +155,39 @@
   <url><loc>https://aerial.cyrkarium.com/studios/zuzu-spot-warszawa</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/makers/flying-rose-lodz</loc><lastmod>2026-11-05</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/makers/taniec-w-powietrzu-lodz</loc><lastmod>2026-11-05</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=warsztat-aerial-gym-c525884c</loc><lastmod>2026-10-31</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=acro-tricki-z-anastazja-cichanowska-e5ffb113</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktora-aerial-hammock-41369449</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=acro-tricki-z-anastazja-cichanowska-e5ffb113</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=warsztat-aerial-gym-c525884c</loc><lastmod>2026-10-31</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=fly-cup-iv-miedzynarodowy-turniej-tanca-akrobatyki-32612c80</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=spotkanie-pasjonatow-tanca-w-powietrzu-5c359eca</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=nicolas-stocco-aerial-hoop-trapeze-harmonic-motion-5b9c831c</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=viii-artystyczny-turniej-aerialowy-pro-da511f1b</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-sedziowski-pfa-2026-2027-4c6b7baa</loc><lastmod>2026-10-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=nicolas-stocco-aerial-hoop-trapeze-harmonic-motion-5b9c831c</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=szkolenie-instruktorskie-aerial-hoop-basic-2bc4febb</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktora-aerial-hoop-67c0ad58</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-sedziowski-pfa-2026-2027-4c6b7baa</loc><lastmod>2026-10-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=tzina-trikka-hair-hanging-c8054d93</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=szkolenie-instruktorskie-aerial-silks-basic-9a4b577a</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=viii-artystyczny-turniej-aerialowy-basic-438abdba</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ii-miedzynarodowe-artystyczne-zawody-akrobatyki-po-9c870ff2</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=v-miedzynarodowy-turniej-akrobatyki-powietrznej-pr-0a84bf60</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=new-year-aerial-meeting-f3016e3a</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=viii-ogolnopolski-turniej-tanca-w-powietrzu-strefy-154469fc</loc><lastmod>2026-10-19</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=love-to-fly-vol-5-ogolnopolski-turniej-tanca-i-akr-ff3a3d7c</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=alberto-diaz-aerial-trapeze-aerial-straps-acrodanc-48232c83</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=aerial-elite-championship-miedzynarodowy-turniej-a-fffc6068</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=alberto-diaz-aerial-trapeze-aerial-straps-acrodanc-48232c83</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=i-otwarte-mistrzostwa-pfa-5a7f9df6</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=dynamic-technique-entangled-sequences-rope-silks-2abafc61</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktorski-aerial-jogi-poziom-1-3e23da38</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-trenerski-pfa-19470126</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=mfa-pniewy-0702c1f6</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=mfa-pniewy-0702c1f6</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ii-edycja-miedzynarodowych-zawodow-aerial-silks-ho-91ce77c6</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ix-artystyczny-turniej-aerialowy-pro-43823f2b</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=akademia-instruktora-aerial-silks-kurs-bazowy-2027-ee5c82bf</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=aerial-camp-create-your-own-act-232574b0</loc><lastmod>2026-11-04</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=aerial-elite-championship-miedzynarodowy-turniej-a-b8ab8e00</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ix-artystyczny-turniej-aerialowy-basic-509f4b10</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ptak-27-935f71c8</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=aerial-kids-camp-lato-2027-31ba93d4</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=akro-aerial-cheer-d1aab638</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=oboz-rekreacyjno-sportowy-fa6fdac3</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=x-artystyczny-turniej-aerialowy-pro-ca1c6083</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
