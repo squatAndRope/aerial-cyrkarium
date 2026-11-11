@@ -547,6 +547,10 @@
     renderFilters();
     const all = publicStudios();
     const list = all.filter(matches);
+    // „Najbliżej mnie”: lista od najbliższego studia, z odległością (lokalizacja zostaje w przeglądarce)
+    if (state.me) list.forEach((s) => { s._km = kmBetween(state.me, s); }), list.sort((a, b) => a._km - b._km);
+    $("near-me").textContent = state.me ? t().nearMeOff : t().nearMe;
+    $("near-me").setAttribute("aria-pressed", String(!!state.me));
     const inCity = state.city ? all.filter((s) => cityKey(s.city) === cityKey(state.city)) : null;
     $("studios-title").textContent = state.city ? t().cityHeading(state.city) : t().studiosTitle;
     $("studios-count").innerHTML = state.loadFailed ? esc(t().loadError)
@@ -567,7 +571,7 @@
     // prawdziwe linki (a nie przyciski), żeby Google widział profile studiów
     else box.innerHTML = list.map((s) => `<a class="st" href="${esc(studioPath(s))}" aria-current="${s.id === state.current}">
         <span class="st-head">${logoImg(s.logo_path, s.name, "logo sm")}<strong>${esc(s.name)}</strong>${s.verified ? `<span class="badge ok">✓ ${esc(t().verifiedShort)}</span>` : ""}</span>
-        <span class="st-meta">${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
+        <span class="st-meta">${state.me ? `<strong>${esc(fmtKm(s._km))}</strong> · ` : ""}${esc(s.city)}${s.address ? " · " + esc(s.address) : ""}</span>
         <span class="tags">${(s.disciplines || []).map((d) => `<span class="tag">${esc(t().disciplines[d] || d)}</span>`).join("")}${s.open_training ? `<span class="tag tag-extra">${esc(t().openTag)}</span>` : ""}${s.rental ? `<span class="tag tag-extra">${esc(t().rentalTag)}</span>` : ""}${s.birthdays ? `<span class="tag tag-extra">${esc(t().birthdaysTag)}</span>` : ""}</span>
       </a>`).join("");
     $("clear-f")?.addEventListener("click", () => { state.filter = { disc: "all", act: "", q: "", level: "", kids: false, open: false, rental: false, birthdays: false }; $("f-q").value = ""; renderStudios(); });
@@ -578,6 +582,14 @@
 
   // mapa: jedna pinezka na miejsce (studia z tymi samymi współrzędnymi łączą się w jedną z liczbą)
   let map = null, layer = null;
+  // odległość w km (wzór haversine) i zapis „1,2 km” / „350 m”
+  const kmBetween = (a, b) => {
+    const R = 6371, r = (x) => x * Math.PI / 180;
+    const dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  };
+  const fmtKm = (km) => km < 1 ? `${Math.round(km * 1000 / 50) * 50} m` : `${(km < 10 ? km.toFixed(1) : Math.round(km)).toString().replace(".", t().locale.startsWith("en") ? "." : ",")} km`;
   function renderMap(list) {
     if (!window.L) return;
     if (!map) {
@@ -612,6 +624,15 @@
       m.addTo(layer);
       bounds.push([g[0].lat, g[0].lng]);
     });
+    // moja lokalizacja: niebieska kropka, a mapa pokazuje mnie i kilka najbliższych studiów
+    if (state.me) {
+      L.circleMarker([state.me.lat, state.me.lng], { radius: 8, color: "#FFFFFF", weight: 3, fillColor: "#2F6FDE", fillOpacity: 1 }).addTo(layer).bindTooltip(t().youAreHere);
+      if (!state.current) {
+        const near = [...list].sort((a, b) => a._km - b._km).slice(0, 5).map((s) => [s.lat, s.lng]);
+        map.fitBounds([[state.me.lat, state.me.lng], ...near], { padding: [40, 40], maxZoom: 13 });
+        return;
+      }
+    }
     if (!state.current) {
       if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 11 });
       else if (bounds.length === 1) map.setView(bounds[0], 11);
@@ -1453,6 +1474,21 @@
   $("f-open").addEventListener("change", (e) => { state.filter.open = e.target.checked; renderStudios(); });
   $("f-rental").addEventListener("change", (e) => { state.filter.rental = e.target.checked; renderStudios(); });
   $("f-birthdays").addEventListener("change", (e) => { state.filter.birthdays = e.target.checked; renderStudios(); });
+  // „Najbliżej mnie”: pytamy przeglądarkę o lokalizację tylko po kliknięciu; nigdzie jej nie wysyłamy ani nie zapisujemy
+  $("near-me").addEventListener("click", () => {
+    if (state.me) { state.me = null; renderStudios(); return; }
+    if (!navigator.geolocation) { notice(t().nearMeNo, "warn"); return; }
+    const b = $("near-me"); b.disabled = true; b.textContent = t().nearMeWait;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      b.disabled = false;
+      state.me = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      countClick("najblizej-mnie", "Najbliżej mnie");
+      if (state.city || state.current) go("/studios/"); else renderStudios();
+    }, (err) => {
+      b.disabled = false; b.textContent = t().nearMe;
+      notice(err && err.code === 1 ? t().nearMeDenied : t().nearMeNo, "warn");
+    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+  });
   $("l-q").addEventListener("input", (e) => { state.lfilter.q = e.target.value; renderBoard(); });
   $("m-q").addEventListener("input", (e) => { state.mfilter.q = e.target.value; renderMakers(); });
   $("m-custom").addEventListener("change", (e) => { state.mfilter.custom = e.target.checked; renderMakers(); });

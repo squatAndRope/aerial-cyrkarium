@@ -369,3 +369,7 @@ button.link { background: none; border: 0; padding: 0; cursor: pointer; text-dec
 .report-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
 .report-form textarea, .report-form input[type="email"] { width: 100%; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* „Najbliżej mnie” */
+.near-me { white-space: nowrap; }
+.near-me[aria-pressed="true"] { background: var(--plum); border-color: var(--plum); color: #FFFFFF; }

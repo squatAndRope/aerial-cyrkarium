@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach.
        Ścieżki zaczynają się od /, bo ta sama strona obsługuje też /studios/…, /board/…, /makers/… i /account/ (.htaccess). -->
-  <link rel="stylesheet" href="/styles.css?v=19">
+  <link rel="stylesheet" href="/styles.css?v=20">
   <link rel="canonical" id="canonical" href="https://aerial.cyrkarium.com/studios/jelcz-laskowice">
   <meta property="og:url" content="https://aerial.cyrkarium.com/studios/jelcz-laskowice">
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "ItemList", "name": "Studia aerial: Jelcz-Laskowice", "url": "https://aerial.cyrkarium.com/studios/jelcz-laskowice", "numberOfItems": 1, "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Selene Pole & Aerial Studio", "url": "https://aerial.cyrkarium.com/studios/selene-pole-aerial-studio-jelcz-laskowice"}]}</script>
@@ -113,6 +113,7 @@
       <div class="chips" id="disc-chips"></div>
       <div class="chips act-chips" id="act-chips"></div>
       <div class="filters-row">
+        <button type="button" class="btn ghost near-me" id="near-me" aria-pressed="false"></button>
         <input id="f-q" type="search" data-ph="searchStudios" data-aria="searchStudios" autocomplete="off">
         <select id="f-level" data-aria="ariaLevel"></select>
         <label class="toggle"><input type="checkbox" id="f-kids"> <span data-i="kidsOnly"></span></label>
@@ -228,8 +229,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/config.js"></script>
-<script src="/i18n.js?v=26"></script>
-<script src="/app.js?v=32"></script>
+<script src="/i18n.js?v=27"></script>
+<script src="/app.js?v=33"></script>
 <!-- statystyki odwiedzin bez cookies (GoatCounter, panel: aerial-cyrkarium.goatcounter.com) -->
 <script data-goatcounter="https://aerial-cyrkarium.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
