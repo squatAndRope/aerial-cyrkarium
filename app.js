@@ -1044,6 +1044,14 @@
 
   // ---------------- 6. Formularz studia ----------------
   const NOMINATIM = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&accept-language=pl&q=";
+  // samo miasto: wyszukiwanie z polem city= daje środek miasta (zwykłe q= dla „Gdańsk” trafiało w zatokę, w środek granic gminy)
+  async function geocodeCity(city) {
+    try {
+      const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&accept-language=pl&city=" + encodeURIComponent(city));
+      const j = await r.json();
+      return Array.isArray(j) && j[0] ? { lat: Number(j[0].lat), lng: Number(j[0].lon) } : await geocode(city);
+    } catch { return undefined; }
+  }
   async function geocode(q) {
     try {
       const r = await fetch(NOMINATIM + encodeURIComponent(q));
@@ -1139,7 +1147,7 @@
       const placeChanged = !s || s.city !== row.city || (s.address || null) !== row.address || s.lat == null;
       if (placeChanged) {
         let hit = row.address ? await geocode(`${row.address}, ${row.city}`) : null;
-        if (!hit) hit = await geocode(row.city);
+        if (!hit) hit = await geocodeCity(row.city);
         if (!hit) { done(); return fail(t().errGeo); }
         row.lat = hit.lat; row.lng = hit.lng;
       }
