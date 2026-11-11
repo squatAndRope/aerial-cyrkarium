@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://aerial.cyrkarium.com/</loc><lastmod>2026-11-09</lastmod><priority>1.0</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/</loc><lastmod>2026-11-09</lastmod><priority>0.9</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/</loc><lastmod>2026-11-09</lastmod><priority>0.9</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/board/</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/</loc><lastmod>2026-11-11</lastmod><priority>1.0</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/</loc><lastmod>2026-11-11</lastmod><priority>0.9</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/</loc><lastmod>2026-11-11</lastmod><priority>0.9</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/board/</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/makers/</loc><lastmod>2026-11-05</lastmod><priority>0.8</priority></url>
   <url><loc>https://aerial.cyrkarium.com/polityka-prywatnosci.html</loc><lastmod>2026-11-09</lastmod><priority>0.2</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/wroclaw</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/wroclaw</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/warszawa</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/krakow</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/poznan</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
@@ -87,8 +87,8 @@
   <url><loc>https://aerial.cyrkarium.com/studios/dream-team-pabianice-pabianice</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/euforia-pole-dance-szczecin</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/explozja-tanca-jastrzebie-zdroj</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/fit-house-danuta-herczynska-grudziadz-poludniowa-9</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/fit-house-danuta-herczynska-grudziadz-wlodka-16-f</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/fit-house-danuta-herczynska-grudziadz-poludniowa-9</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/fitness-for-ladies-piaseczno</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/fitology-studio-jogi-i-pilatesu-warszawa</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/flying-flower-leszno</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
@@ -100,6 +100,7 @@
   <url><loc>https://aerial.cyrkarium.com/studios/gofly-studio-lodz</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/gojump-bielsko-biala-bielsko-biala</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/gravity-aerial-yoga-ostroda</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/gravity-gym-wroclaw</loc><lastmod>2026-11-11</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/grupa-magnifica-olawa-olawa</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/halo-aerial-lab-siedlce</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/heaven-aerial-dance-studio-krakow-krakow</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
