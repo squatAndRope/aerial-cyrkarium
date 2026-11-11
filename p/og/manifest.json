@@ -9,7 +9,7 @@
 "cities/gdansk": "[\"Gdańsk\", \"5 studiów aerial · inne przyrządy, szarfy, koło, pole\", \"\", 2]",
 "cities/gdynia": "[\"Gdynia\", \"1 studio aerial · koło, szarfy\", \"\", 2]",
 "cities/gorzow-wielkopolski": "[\"Gorzów Wielkopolski\", \"1 studio aerial · szarfy, koło\", \"\", 2]",
-"cities/grudziadz": "[\"Grudziądz\", \"2 studia aerial · szarfy, hamak, inne przyrządy\", \"\", 2]",
+"cities/grudziadz": "[\"Grudziądz\", \"2 studia aerial · hamak, inne przyrządy, szarfy\", \"\", 2]",
 "cities/jastrzebie-zdroj": "[\"Jastrzębie-Zdrój\", \"1 studio aerial · aerial joga, szarfy\", \"\", 2]",
 "cities/jelcz-laskowice": "[\"Jelcz-Laskowice\", \"1 studio aerial · hamak, pole\", \"\", 2]",
 "cities/katowice": "[\"Katowice\", \"1 studio aerial · aerial joga\", \"\", 2]",
@@ -44,7 +44,7 @@
 "cities/swarzedz": "[\"Swarzędz\", \"1 studio aerial · szarfy, hamak\", \"\", 2]",
 "cities/swidnik": "[\"Świdnik\", \"1 studio aerial · aerial joga\", \"\", 2]",
 "cities/swinoujscie": "[\"Świnoujście\", \"1 studio aerial · aerial joga, hamak, koło, pole\", \"\", 2]",
-"cities/szczecin": "[\"Szczecin\", \"2 studia aerial · koło, szarfy, hamak, pole\", \"\", 2]",
+"cities/szczecin": "[\"Szczecin\", \"3 studia aerial · koło, szarfy, lina, trapez\", \"\", 2]",
 "cities/tarnow": "[\"Tarnów\", \"1 studio aerial · szarfy, pole\", \"\", 2]",
 "cities/torun": "[\"Toruń\", \"1 studio aerial · aerial joga\", \"\", 2]",
 "cities/warszawa": "[\"Warszawa\", \"8 studiów aerial · koło, szarfy, trapez, aerial joga\", \"\", 2]",
@@ -113,6 +113,7 @@
 "studios/badz-pelnia-beata-pniewska-w-przestrzeni-dobra-lublin": "[\"Bądź Pełnią - Beata Pniewska w Przestrzeni Dobra\", \"Lublin · aerial joga\", \"\", 2]",
 "studios/centrum-aerial-circus-magnifica-bielany-wroclawskie": "[\"Centrum Aerial Circus Magnifica\", \"Bielany Wrocławskie · koło, szarfy\", \"dfecffd1-856c-4ea6-8dee-9fc95ff31dd2/658939ea-59c9-46fe-b76e-cd9c55d0ba5f.webp\", 2]",
 "studios/centrum-dzialan-tworczych-kuznia-bielany-wroclawskie": "[\"Centrum Działań Twórczych \\\"Kuźnia\\\"\", \"Bielany Wrocławskie · szarfy, hamak\", \"\", 2]",
+"studios/cyrk-zodiak-szczecin": "[\"Cyrk Zodiak\", \"Szczecin · koło, szarfy, lina, trapez\", \"c84b6416-7201-4d70-8c7d-4ac2dd839488/86843588-fc4a-44ca-917c-3f6eae929a4a.webp\", 2]",
 "studios/cyrkus-zgorzelec": "[\"Cyrkus\", \"Zgorzelec · szarfy\", \"\", 2]",
 "studios/czula-joga-pabianice-pabianice": "[\"Czuła Joga Pabianice\", \"Pabianice · szarfy, koło, hamak\", \"\", 2]",
 "studios/danceart-szkola-tanca-krzeszowice": "[\"DanceArt Szkoła Tańca\", \"Krzeszowice · szarfy, koło, hamak\", \"\", 2]",
@@ -184,6 +185,6 @@
 "studios/the-space-pole-aerial-studio-warszawa": "[\"THE SPACE pole & aerial studio\", \"Warszawa · koło, szarfy, hamak, pole\", \"\", 2]",
 "studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-siechnice": "[\"White Swan Studio Tańca i Akrobatyki Powietrznej\", \"Siechnice · inne przyrządy\", \"\", 2]",
 "studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-wroclaw": "[\"White Swan Studio Tańca i Akrobatyki Powietrznej\", \"Wrocław · aerial joga, hamak, koło, szarfy\", \"\", 2]",
-"studios/zodiak-aerial-dance-studio-szczecin": "[\"Zodiak Aerial Dance Studio\", \"Szczecin · koło, szarfy, lina, hamak\", \"\", 2]",
+"studios/zodiak-aerial-dance-studio-szczecin": "[\"Zodiak Aerial Dance Studio\", \"Szczecin · koło, szarfy, lina, hamak\", \"c84b6416-7201-4d70-8c7d-4ac2dd839488/5469447b-bd50-4a3e-b651-a10618184563.webp\", 2]",
 "studios/zuzu-spot-warszawa": "[\"ZuZu SPOT\", \"Warszawa · szarfy, koło\", \"\", 2]"
 }
