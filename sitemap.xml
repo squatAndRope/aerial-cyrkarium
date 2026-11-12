@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://aerial.cyrkarium.com/</loc><lastmod>2026-11-11</lastmod><priority>1.0</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/</loc><lastmod>2026-11-11</lastmod><priority>0.9</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/</loc><lastmod>2026-11-11</lastmod><priority>0.9</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/board/</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/</loc><lastmod>2026-11-12</lastmod><priority>1.0</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/</loc><lastmod>2026-11-12</lastmod><priority>0.9</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/</loc><lastmod>2026-11-12</lastmod><priority>0.9</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/board/</loc><lastmod>2026-11-12</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/makers/</loc><lastmod>2026-11-05</lastmod><priority>0.8</priority></url>
   <url><loc>https://aerial.cyrkarium.com/polityka-prywatnosci.html</loc><lastmod>2026-11-09</lastmod><priority>0.2</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/wroclaw</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
@@ -12,7 +12,7 @@
   <url><loc>https://aerial.cyrkarium.com/studios/poznan</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/gdansk</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/lublin</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/szczecin</loc><lastmod>2026-11-11</lastmod><priority>0.7</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/szczecin</loc><lastmod>2026-11-12</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/lodz</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/bialystok</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/bielany-wroclawskie</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
@@ -33,6 +33,7 @@
   <url><loc>https://aerial.cyrkarium.com/studios/koszalin</loc><lastmod>2026-11-08</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/kolobrzeg</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/krzeszowice</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/legnica</loc><lastmod>2026-11-12</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/leszno</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/lidzbark-warminski</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/milicz</loc><lastmod>2026-11-08</lastmod><priority>0.7</priority></url>
@@ -92,8 +93,8 @@
   <url><loc>https://aerial.cyrkarium.com/studios/dream-team-pabianice-pabianice</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/euforia-pole-dance-szczecin</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/explozja-tanca-jastrzebie-zdroj</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/fit-house-danuta-herczynska-grudziadz-poludniowa-9</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/fit-house-danuta-herczynska-grudziadz-wlodka-16-f</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/fit-house-danuta-herczynska-grudziadz-poludniowa-9</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/fitness-for-ladies-piaseczno</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/fitology-studio-jogi-i-pilatesu-warszawa</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/flying-flower-leszno</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
@@ -155,26 +156,29 @@
   <url><loc>https://aerial.cyrkarium.com/studios/studio21-poraj</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/szkola-akrobatyki-poznan</loc><lastmod>2026-11-11</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/szkola-pole-dance-rumia-rumia</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/szkola-tanca-art-wibracje-szczecin</loc><lastmod>2026-11-12</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/taniec-w-powietrzu-scena-lodz</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/teatr-avatar-legnica</loc><lastmod>2026-11-12</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/the-space-pole-aerial-studio-warszawa</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-siechnice</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-wroclaw</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-siechnice</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/zodiak-aerial-dance-studio-szczecin</loc><lastmod>2026-11-11</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/studios/zuzu-spot-warszawa</loc><lastmod>2026-11-08</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/makers/flying-rose-lodz</loc><lastmod>2026-11-05</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/makers/taniec-w-powietrzu-lodz</loc><lastmod>2026-11-05</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=warsztat-aerial-gym-c525884c</loc><lastmod>2026-10-31</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=acro-tricki-z-anastazja-cichanowska-e5ffb113</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktora-aerial-hammock-41369449</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=acro-tricki-z-anastazja-cichanowska-e5ffb113</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=warsztat-aerial-gym-c525884c</loc><lastmod>2026-10-31</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=fly-cup-iv-miedzynarodowy-turniej-tanca-akrobatyki-32612c80</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=spotkanie-pasjonatow-tanca-w-powietrzu-5c359eca</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=viii-artystyczny-turniej-aerialowy-pro-da511f1b</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=nicolas-stocco-aerial-hoop-trapeze-harmonic-motion-5b9c831c</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktora-aerial-hoop-67c0ad58</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=szkolenie-instruktorskie-aerial-hoop-basic-2bc4febb</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-sedziowski-pfa-2026-2027-4c6b7baa</loc><lastmod>2026-10-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktora-aerial-hoop-67c0ad58</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=tzina-trikka-hair-hanging-c8054d93</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=szkolenie-instruktorskie-aerial-silks-basic-9a4b577a</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=warsztaty-anatomia-szpagatu-w-aerialu-z-emilia-lew-9142cbb8</loc><lastmod>2026-11-12</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=viii-artystyczny-turniej-aerialowy-basic-438abdba</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ii-miedzynarodowe-artystyczne-zawody-akrobatyki-po-9c870ff2</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=v-miedzynarodowy-turniej-akrobatyki-powietrznej-pr-0a84bf60</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
@@ -183,11 +187,11 @@
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=viii-ogolnopolski-turniej-tanca-w-powietrzu-strefy-154469fc</loc><lastmod>2026-10-19</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=love-to-fly-vol-5-ogolnopolski-turniej-tanca-i-akr-ff3a3d7c</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=warsztaty-aerial-hoop-z-sara-kreis-214424dd</loc><lastmod>2026-11-11</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=aerial-elite-championship-miedzynarodowy-turniej-a-fffc6068</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=alberto-diaz-aerial-trapeze-aerial-straps-acrodanc-48232c83</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=aerial-elite-championship-miedzynarodowy-turniej-a-fffc6068</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=i-otwarte-mistrzostwa-pfa-5a7f9df6</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
-  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktorski-aerial-jogi-poziom-1-3e23da38</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=dynamic-technique-entangled-sequences-rope-silks-2abafc61</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
+  <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-instruktorski-aerial-jogi-poziom-1-3e23da38</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=kurs-trenerski-pfa-19470126</loc><lastmod>2026-10-25</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=mfa-pniewy-0702c1f6</loc><lastmod>2026-11-09</lastmod><priority>0.6</priority></url>
   <url><loc>https://aerial.cyrkarium.com/calendar/?e=ii-edycja-miedzynarodowych-zawodow-aerial-silks-ho-91ce77c6</loc><lastmod>2026-10-18</lastmod><priority>0.6</priority></url>
