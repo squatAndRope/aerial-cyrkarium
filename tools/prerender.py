@@ -140,7 +140,33 @@ def short(text, n=155):
 TEMPLATE = (ROOT / "index.html").read_text()
 
 
-def page(title, desc, url, image, alt, ld, template=None):
+def esc(t):
+    return html.escape(str(t or ""), quote=True)
+
+
+def static_block(parts):
+    """Treść strony w samym HTML (nazwa, adres, opis, linki). Wyszukiwarki i podglądy widzą ją
+    bez uruchamiania skryptów, więc strony nie wyglądają jak duplikaty. Aplikacja usuwa ją po starcie."""
+    body = "\n".join(x for x in parts if x)
+    return (f'<article id="seo-static" style="max-width:720px;margin:24px auto;padding:0 16px;font-family:sans-serif;line-height:1.5">\n'
+            f'{body}\n</article>\n')
+
+
+def a(href, text):
+    return f'<a href="{esc(href)}">{esc(text)}</a>' if href else ""
+
+
+def para(*bits):
+    t = " · ".join(esc(b) for b in bits if b)
+    return f"<p>{t}</p>" if t else ""
+
+
+def text_block(t):
+    t = (t or "").strip()
+    return "".join(f"<p>{esc(x)}</p>" for x in re.split(r"\n\s*\n|\n", t) if x.strip())
+
+
+def page(title, desc, url, image, alt, ld, template=None, body=""):
     e = lambda s: html.escape(s, quote=True)
     h = template or TEMPLATE
     subs = [
@@ -164,7 +190,11 @@ def page(title, desc, url, image, alt, ld, template=None):
              f'  <meta property="og:url" content="{e(url)}">\n') + (
              f'  <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False).replace("</", "<\\/")}</script>\n'
              "  <!-- wygenerowane przez tools/prerender.py, nie edytuj ręcznie -->\n")
-    return h.replace("</head>", extra + "</head>", 1).encode()
+    h = h.replace("</head>", extra + "</head>", 1)
+    if body:
+        assert h.count("<body>") == 1
+        h = h.replace("<body>", "<body>\n" + body, 1)
+    return h.encode()
 
 
 def links(*urls):
@@ -173,6 +203,7 @@ def links(*urls):
 
 changed = 0
 studios = get("studios", "id,name,city,address,lat,lng,disciplines,description,website_url,instagram_url,facebook_url,logo_path")
+city_of = {s["id"]: (cslug, cname) for cslug, cname, rows in cities([s for s in studios if s.get("lat") is not None]) for s in rows}
 for s in studios:
     slug = studio_slug(studios, s)
     url = f"{SITE}/studios/{slug}"
@@ -190,8 +221,19 @@ for s in studios:
     if same:
         ld["sameAs"] = same
     changed += og_image("studios", slug, s["name"], line2, s.get("logo_path"))
+    cslug, cname = city_of.get(s["id"], (None, s["city"]))
+    body = static_block([
+        f"<h1>{esc(s['name'])}</h1>",
+        para(s["city"], s.get("address")),
+        text_block(s.get("description")),
+        f"<p>Zajęcia: {esc(', '.join(disc))}</p>" if disc else "",
+        "<p>" + " · ".join(x for x in [a(s.get("website_url"), "Strona studia"), a(s.get("instagram_url"), "Instagram"),
+                                       a(s.get("facebook_url"), "Facebook")] if x) + "</p>" if same else "",
+        "<p>" + " · ".join(x for x in [a(f"/studios/{cslug}" if cslug else None, f"Studia aerial: {cname}"),
+                                       a("/studios/", "Mapa studiów aerial w Polsce")] if x) + "</p>",
+    ])
     changed += write(OUT / "studios" / f"{slug}.html",
-                     page(f"{s['name']} · {s['city']} · Aerial w Polsce", desc, url, img, f"{s['name']}, {line2}", ld))
+                     page(f"{s['name']} · {s['city']} · Aerial w Polsce", desc, url, img, f"{s['name']}, {line2}", ld, body=body))
 
 # strony miast: /studios/krakow
 def plural_pl(n, one, few, many):
@@ -221,8 +263,15 @@ for cslug, cname, rows in cities([s for s in studios if s.get("lat") is not None
           "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": s["name"],
                                "url": f"{SITE}/studios/{studio_slug(studios, s)}"} for i, s in enumerate(rows)]}
     changed += og_image("cities", cslug, cname, count + (" · " + ", ".join(disc[:4]) if disc else ""), None)
+    body = static_block([
+        f"<h1>Studia aerial: {esc(cname)}</h1>",
+        f"<p>{esc(count)}" + (f": {esc(', '.join(disc))}" if disc else "") + ".</p>",
+        "<ul>" + "".join(f"<li>{a('/studios/' + studio_slug(studios, s), s['name'])}" + (f" · {esc(s['address'])}" if s.get("address") else "") + "</li>"
+                         for s in rows) + "</ul>",
+        f"<p>{a('/studios/', 'Mapa studiów aerial w Polsce')} · {a('/calendar/', 'Kalendarz wydarzeń aerial')}</p>",
+    ])
     changed += write(OUT / "studios" / f"{cslug}.html",
-                     page(f"Studia aerial: {cname} ({n}) · Aerial w Polsce", desc, url, img, f"{cname}: {count}", ld))
+                     page(f"Studia aerial: {cname} ({n}) · Aerial w Polsce", desc, url, img, f"{cname}: {count}", ld, body=body))
 
 # wydarzenia z kalendarza: /calendar/?e=<tytuł>-<id8> (.htaccess podaje p/events/<to samo>.html)
 import datetime
@@ -262,8 +311,16 @@ for ev in events:
         ld["offers"] = {"@type": "Offer", "url": ev["reg_url"], "priceCurrency": "PLN",
                         **({"price": 0} if ev.get("is_free") else ({"price": ev["price_pln"]} if ev.get("price_pln") is not None else {}))}
     changed += og_image("events", param, ev["title"], line2, None)
+    body = static_block([
+        f"<h1>{esc(ev['title'])}</h1>",
+        para(line2),
+        para(ev.get("venue"), ev.get("organizer") and f"Organizator: {ev['organizer']}"),
+        text_block(ev.get("description")),
+        f"<p>{a(ev.get('reg_url'), 'Zapisy i szczegóły')}</p>" if ev.get("reg_url") else "",
+        f"<p>{a('/calendar/', 'Kalendarz wydarzeń aerial')} · {a('/studios/', 'Mapa studiów aerial')}</p>",
+    ])
     changed += write(OUT / "events" / f"{param}.html",
-                     page(f"{ev['title']} · {line2} · Aerial w Polsce", desc, url, img, f"{ev['title']}, {line2}", ld, CAL_TEMPLATE))
+                     page(f"{ev['title']} · {line2} · Aerial w Polsce", desc, url, img, f"{ev['title']}, {line2}", ld, CAL_TEMPLATE, body))
 
 makers = get("makers", "id,name,city,products,description,website_url,shop_url,instagram_url,facebook_url,logo_path")
 for m in makers:
@@ -280,8 +337,16 @@ for m in makers:
     if same:
         ld["sameAs"] = same
     changed += og_image("makers", slug, m["name"], line2, m.get("logo_path"))
+    body = static_block([
+        f"<h1>{esc(m['name'])}</h1>",
+        para(m["city"], ", ".join(prod)),
+        text_block(m.get("description")),
+        "<p>" + " · ".join(x for x in [a(m.get("website_url"), "Strona"), a(m.get("shop_url"), "Sklep"),
+                                       a(m.get("instagram_url"), "Instagram"), a(m.get("facebook_url"), "Facebook")] if x) + "</p>" if same else "",
+        f"<p>{a('/makers/', 'Producenci sprzętu aerial w Polsce')}</p>",
+    ])
     changed += write(OUT / "makers" / f"{slug}.html",
-                     page(f"{m['name']} · {m['city']} · Aerial w Polsce", desc, url, img, f"{m['name']}, {line2}", ld))
+                     page(f"{m['name']} · {m['city']} · Aerial w Polsce", desc, url, img, f"{m['name']}, {line2}", ld, body=body))
 
 changed += write(MANIFEST, (json.dumps(new_manifest, ensure_ascii=False, indent=0, sort_keys=True) + "\n").encode())
 

@@ -14,6 +14,8 @@
    i niczego nie zapisuje. */
 (function () {
   "use strict";
+  // treść strony w samym HTML (tools/prerender.py) jest dla wyszukiwarek; aplikacja rysuje własną
+  { const seo = document.getElementById("seo-static"); if (seo) seo.remove(); }
 
   // ---------------- 1. Ustawienia, język, pomocnicze ----------------
   const CFG = window.AC_CONFIG;

@@ -4,6 +4,8 @@
    Widoki: #events (kalendarz), #add (dodaj/popraw), #mine (moje), #admin (zatwierdzanie). */
 (function () {
   "use strict";
+  // treść strony w samym HTML (tools/prerender.py) jest dla wyszukiwarek; aplikacja rysuje własną
+  { const seo = document.getElementById("seo-static"); if (seo) seo.remove(); }
 
   const TEXTS = window.AE_TEXTS;
   const CFG = window.AE_CONFIG || {};
