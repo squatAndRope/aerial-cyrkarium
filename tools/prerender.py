@@ -290,8 +290,9 @@ def when(a, b):
     return f"{da.day} {MONTHS[da.month - 1]} – {db.day} {MONTHS[db.month - 1]} {db.year}"
 
 
+studio_by_id = {s["id"]: s for s in studios}
 since = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
-events = [ev for ev in get("events", "id,title,type,date_start,date_end,city,venue,organizer,description,price_pln,is_free,reg_url", order="date_start")
+events = [ev for ev in get("events", "id,title,type,date_start,date_end,city,venue,organizer,description,price_pln,is_free,reg_url,reg_deadline,created_at,studio_id", order="date_start")
           if (ev.get("date_end") or ev.get("date_start") or "") >= since]
 for ev in events:
     param = "-".join(x for x in [slugify(ev["title"] or "")[:50].rstrip("-"), ev["id"][:8]] if x)
@@ -305,11 +306,19 @@ for ev in events:
           "description": short(ev.get("description") or line2, 300),
           "location": {"@type": "Place", "name": ev.get("venue") or ev.get("city"),
                        "address": {"@type": "PostalAddress", "addressLocality": ev.get("city"), "addressCountry": "PL"}}}
-    if ev.get("organizer"):
-        ld["organizer"] = {"@type": "Organization", "name": ev["organizer"]}
-    if ev.get("reg_url"):
-        ld["offers"] = {"@type": "Offer", "url": ev["reg_url"], "priceCurrency": "PLN",
-                        **({"price": 0} if ev.get("is_free") else ({"price": ev["price_pln"]} if ev.get("price_pln") is not None else {}))}
+    host = studio_by_id.get(ev.get("studio_id"))
+    if ev.get("organizer") or host:
+        ld["organizer"] = {"@type": "Organization", "name": ev.get("organizer") or host["name"]}
+        if host:  # wydarzenie przypięte do studia: link do jego profilu
+            ld["organizer"]["url"] = f"{SITE}/studios/{studio_slug(studios, host)}"
+    # oferta tylko ze znaną ceną (Google ostrzega o braku ceny); dostępność tylko, gdy zapisy trwają
+    price = 0 if ev.get("is_free") else ev.get("price_pln")
+    if ev.get("reg_url") and price is not None:
+        ld["offers"] = {"@type": "Offer", "url": ev["reg_url"], "price": price, "priceCurrency": "PLN"}
+        if ev.get("created_at"):
+            ld["offers"]["validFrom"] = ev["created_at"][:10]
+        if (ev.get("reg_deadline") or ev["date_start"]) >= datetime.date.today().isoformat():
+            ld["offers"]["availability"] = "https://schema.org/InStock"
     changed += og_image("events", param, ev["title"], line2, None)
     body = static_block([
         f"<h1>{esc(ev['title'])}</h1>",
