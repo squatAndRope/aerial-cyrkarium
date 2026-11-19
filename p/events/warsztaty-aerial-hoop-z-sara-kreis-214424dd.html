@@ -22,15 +22,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Unbounded:wght@300;500;700&display=swap">
   <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach (ta sama liczba). -->
-  <link rel="stylesheet" href="styles.css?v=37">
+  <link rel="stylesheet" href="styles.css?v=38">
   <meta property="og:image:alt" content="Warsztaty Aerial Hoop z Sarą Kreis, 7 lut 2027 · Nysa · warsztaty">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "Warsztaty Aerial Hoop z Sarą Kreis", "url": "https://aerial.cyrkarium.com/calendar/?e=warsztaty-aerial-hoop-z-sara-kreis-214424dd", "image": "https://aerial.cyrkarium.com/p/og/events/warsztaty-aerial-hoop-z-sara-kreis-214424dd.jpg", "startDate": "2027-02-07", "endDate": "2027-02-07", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "description": "Warsztaty z koła z Sarą Kreis: 11 lat doświadczenia w akrobatyce powietrznej, wielokrotna medalistka mistrzostw Polski i świata w Aerial Hoop, finalistka Mam Talent (2022, 2025). Trzy bloki, każdy po 6 miejsc (1 osoba na koło): • 12:00–13:15 Dropy i dynamika (początkujący / średniozaawansowany):…", "location": {"@type": "Place", "name": "ul. Wyspiańskiego 3/4", "address": {"@type": "PostalAddress", "addressLocality": "Nysa", "addressCountry": "PL"}}, "organizer": {"@type": "Organization", "name": "Butterfly Pole Dance And Aerial Nysa", "url": "https://aerial.cyrkarium.com/studios/butterfly-pole-dance-aerial-nysa"}, "offers": {"@type": "Offer", "url": "https://fb.me/e/f4jCqgrdJ", "price": 180, "priceCurrency": "PLN", "validFrom": "2026-11-11", "availability": "https://schema.org/InStock"}}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "Warsztaty Aerial Hoop z Sarą Kreis", "url": "https://aerial.cyrkarium.com/calendar/?e=warsztaty-aerial-hoop-z-sara-kreis-214424dd", "image": "https://aerial.cyrkarium.com/p/og/events/warsztaty-aerial-hoop-z-sara-kreis-214424dd.jpg", "startDate": "2027-02-07", "endDate": "2027-02-07", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "description": "Warsztaty z koła z Sarą Kreis: 11 lat doświadczenia w akrobatyce powietrznej, wielokrotna medalistka mistrzostw Polski i świata w Aerial Hoop, finalistka Mam Talent (2022, 2025). Trzy bloki, każdy po 6 miejsc (1 osoba na koło): • 12:00–13:15 Dropy i dynamika (początkujący / średniozaawansowany):…", "location": {"@type": "Place", "name": "ul. Wyspiańskiego 3/4", "address": {"@type": "PostalAddress", "addressLocality": "Nysa", "addressCountry": "PL"}}, "performer": [{"@type": "Person", "name": "Sara Kreis"}], "organizer": {"@type": "Organization", "name": "Butterfly Pole Dance And Aerial Nysa", "url": "https://aerial.cyrkarium.com/studios/butterfly-pole-dance-aerial-nysa"}, "offers": {"@type": "Offer", "url": "https://fb.me/e/f4jCqgrdJ", "price": 180, "priceCurrency": "PLN", "validFrom": "2026-11-11", "availability": "https://schema.org/InStock"}}</script>
   <!-- wygenerowane przez tools/prerender.py, nie edytuj ręcznie -->
 </head>
 <body>
 <article id="seo-static" style="max-width:720px;margin:24px auto;padding:0 16px;font-family:sans-serif;line-height:1.5">
 <h1>Warsztaty Aerial Hoop z Sarą Kreis</h1>
 <p>7 lut 2027 · Nysa · warsztaty</p>
+<p>Prowadzi: Sara Kreis</p>
 <p>ul. Wyspiańskiego 3/4 · Organizator: Butterfly Pole Dance And Aerial Nysa</p>
 <p>Warsztaty z koła z Sarą Kreis: 11 lat doświadczenia w akrobatyce powietrznej, wielokrotna medalistka mistrzostw Polski i świata w Aerial Hoop, finalistka Mam Talent (2022, 2025).</p><p>Trzy bloki, każdy po 6 miejsc (1 osoba na koło):</p><p>• 12:00–13:15 Dropy i dynamika (początkujący / średniozaawansowany): jak poprawić dynamikę i proste, efektowne dropy na przełamanie się przed spadaniem w przód i w tył.</p><p>• 13:30–14:45 Zeskoki z koła i salta (open, głównie dla zaczynających z zeskokami): bezpieczne przygotowanie i rozgrzewka, klasyczne zeskoki: salto spod kolan, z bioder w przód, z V, z pleców.</p><p>• 15:00–16:15 Elbow rolls (open): bezpieczna technika, najczęstsze błędy, przygotowanie ciała i głowy, część praktyczna.</p><p>Cena: 180 zł za blok. Certyfikaty imienne i mały poczęstunek na miejscu. Zapisy przez Messengera studia Butterfly na Facebooku (link w wydarzeniu).</p>
 <p><a href="https://fb.me/e/f4jCqgrdJ">Zapisy i szczegóły</a></p>
@@ -99,6 +100,7 @@
   <!-- KALENDARZ -->
   <section id="view-events" class="view">
     <div class="filters">
+      <div class="with-bar" id="with-bar" hidden></div>
       <div class="chips" id="type-chips"></div>
       <div class="selects">
         <input id="f-q" type="search" data-ph="search" data-aria="search" autocomplete="off">
@@ -133,6 +135,7 @@
         <div class="field"><label for="i-aud" data-i="fAudience"></label><select id="i-aud"></select></div>
         <div class="field full"><span class="field-label" id="disc-label" data-i="fDisc"></span><div class="checks" id="i-disc" role="group" aria-labelledby="disc-label"></div><span class="hint" data-i="hDisc"></span></div>
         <div class="field full"><label for="i-org" data-i="fOrg"></label><input id="i-org" maxlength="100"></div>
+        <div class="field full"><label for="i-who" data-i="fWho"></label><input id="i-who" maxlength="600" data-ph="fWhoPh" autocomplete="off"><span class="hint" data-i="hWho"></span></div>
       </fieldset>
       <fieldset>
         <legend data-i="lgWhen"></legend>
@@ -195,8 +198,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
-<script src="i18n.js?v=39"></script>
-<script src="app.js?v=39"></script>
+<script src="i18n.js?v=40"></script>
+<script src="app.js?v=40"></script>
 <!-- statystyki odwiedzin bez cookies (GoatCounter, panel: aerial-cyrkarium.goatcounter.com) -->
 <script data-goatcounter="https://aerial-cyrkarium.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>

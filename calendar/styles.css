@@ -261,6 +261,13 @@ img { max-width: 100%; }
 .ev-card .meta { font-size: 13.5px; gap: 2px 12px; }
 .ev-card .meta .where { color: var(--ink); font-weight: 600; }
 .ev-card .desc { font-size: 14px; color: var(--muted); }
+/* prowadzący: linki do wszystkich wydarzeń z tą osobą */
+.who { margin: 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.who a { color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: rgba(127,127,127,.4); text-underline-offset: 2px; }
+.who a:hover { text-decoration-color: currentColor; }
+.details .who { font-size: 15px; }
+.with-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 14px; border-radius: 12px; background: var(--date-bg); color: var(--date-ink); }
+.with-bar .btn { margin-left: auto; }
 .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .card-actions { margin-top: auto; padding-top: 6px; display: flex; }
 /* Równe kafelki na komputerze: każdy element ma stałe miejsce, a pełna treść jest w okienku szczegółów */
@@ -270,6 +277,7 @@ img { max-width: 100%; }
   .ev-card > .tags { height: 54px; overflow: hidden; align-content: flex-start; }
   .ev-card .ev-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; height: 60px; font-size: 16px; }
   .ev-card > .meta { height: 92px; overflow: hidden; align-content: flex-start; }
+  .ev-card > .who { height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ev-card > .desc { height: 63px; }
 }
 .date-chip { display: inline-flex; flex-direction: column; background: var(--date-bg); color: var(--date-ink); border-radius: 10px; padding: 6px 12px; font-variant-numeric: tabular-nums; }

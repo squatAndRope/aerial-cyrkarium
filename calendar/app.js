@@ -54,7 +54,8 @@
     sb: null, user: null, isAdmin: false,
     events: [], eventsLoaded: false, eventsError: false,
     mine: [], pending: [],
-    filter: { type: "", city: new URLSearchParams(location.search).get("city") || "", level: "", disc: "", aud: "", q: "", past: false },
+    filter: { type: "", city: new URLSearchParams(location.search).get("city") || "", level: "", disc: "", aud: "", q: "", past: false,
+      with: new URLSearchParams(location.search).get("with") || "" }, // with = prowadzący (slug z linku /calendar/?with=…)
     studios: [], studioById: {},
     view: "events", editing: null, authReady: false, mode: "list",
   };
@@ -323,6 +324,54 @@
     if (e.is_free) tags.appendChild(el("span", "tag free", t().free));
     return tags;
   }
+  // prowadzący: „Prowadzi: Olena Hawran, Sara Kreis”; nazwisko = link do wszystkich wydarzeń z tą osobą
+  const peopleOf = (e) => (Array.isArray(e.instructors) ? e.instructors.filter(Boolean) : []);
+  function parsePeople(v) {
+    const out = [];
+    (v || "").split(/[,;\n]+/).map((x) => x.trim().replace(/\s+/g, " ").slice(0, 80)).filter(Boolean)
+      .forEach((x) => { if (!out.some((y) => y.toLowerCase() === x.toLowerCase())) out.push(x); });
+    return out.slice(0, 10);
+  }
+  function whoLine(e, always) {
+    const ps = peopleOf(e);
+    if (!ps.length && !always) return null;
+    const p = el("p", "who");
+    if (!ps.length) return p; // pusta linijka: równe kafelki na komputerze
+    p.appendChild(el("span", "who-label", t().withWho + ": "));
+    ps.forEach((name, i) => {
+      if (i) p.appendChild(document.createTextNode(", "));
+      const a = el("a", null, name); a.href = "/calendar/?with=" + slugify(name);
+      a.addEventListener("click", (ev) => { ev.preventDefault(); showPerson(name); });
+      p.appendChild(a);
+    });
+    return p;
+  }
+  // filtr „wydarzenia z tą osobą”: pasek nad kalendarzem, adres /calendar/?with=<slug>
+  function showPerson(name) {
+    if (detailsDlg && detailsDlg.open) detailsDlg.close();
+    state.filter.with = slugify(name);
+    history.replaceState(null, "", location.pathname + "?with=" + state.filter.with + location.hash);
+    if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: "prowadzacy/" + state.filter.with, title: name, event: true });
+    if (state.view !== "events") { location.hash = ""; setView("events"); }
+    renderEvents();
+    window.scrollTo(0, 0);
+  }
+  function renderWithBar() {
+    const bar = $("with-bar"); if (!bar) return;
+    const key = state.filter.with ? slugify(state.filter.with) : "";
+    bar.textContent = ""; bar.hidden = !key;
+    if (!key) return;
+    let name = key;
+    state.events.some((e) => peopleOf(e).some((p) => { if (slugify(p) === key) { name = p; return true; } return false; }));
+    bar.appendChild(el("span", null, t().withBar + " "));
+    bar.appendChild(el("strong", null, name));
+    const x = btn("ghost", t().withAll + " ✕", () => {
+      state.filter.with = "";
+      if (new URLSearchParams(location.search).has("with")) history.replaceState(null, "", location.pathname + location.hash);
+      renderEvents();
+    });
+    bar.appendChild(x);
+  }
   // miasto · miejsce, cena, organizator, termin zapisów
   function eventMeta(e) {
     const meta = el("div", "meta");
@@ -537,7 +586,8 @@
       // „tylko dla dzieci” = oznaczone dla dzieci; „bez wydarzeń dla dzieci” = wszystko poza nimi
       if (f.aud === "kids" && e.audience !== "kids") return false;
       if (f.aud === "adults" && e.audience === "kids") return false;
-      if (f.q && !((e.title || "") + " " + (e.organizer || "") + " " + (e.city || "")).toLowerCase().includes(f.q)) return false;
+      if (f.with && !peopleOf(e).some((p) => slugify(p) === slugify(f.with))) return false;
+      if (f.q && !((e.title || "") + " " + (e.organizer || "") + " " + (e.city || "") + " " + peopleOf(e).join(" ")).toLowerCase().includes(f.q)) return false;
       return true;
     }).sort(byDate);
     return onlyPast ? out.reverse() : out;   // minione: od najświeższych
@@ -565,6 +615,7 @@
     card.appendChild(top);
     card.appendChild(eventTags(e));
     card.appendChild(el("h3", "ev-title", e.title || ""));
+    card.appendChild(whoLine(e, true));
     card.appendChild(eventMeta(e));
     if (e.description) {
       card.appendChild(el("p", "desc clamp", e.description));
@@ -610,6 +661,7 @@
     inner.appendChild(head);
     inner.appendChild(eventTags(e));
     const h = el("h2", "ev-title", e.title || ""); h.id = "details-title"; inner.appendChild(h);
+    const who = whoLine(e); if (who) inner.appendChild(who);
     inner.appendChild(eventMeta(e));
     if (e.description) inner.appendChild(el("p", "desc", e.description));
     const acts = registerActions(e) || el("div", "card-actions");
@@ -804,6 +856,7 @@
 
   function renderEvents() {
     const list = $("event-list"); list.textContent = ""; list.hidden = false;
+    renderWithBar();
     $("map-note").textContent = "";
     if (state.mode !== "map" || !state.events.length) $("map-wrap").hidden = true;
     if (!state.sb) { list.appendChild(el("div", "notice bad", t().configMissing)); return; }
@@ -857,6 +910,7 @@
     state.editing = e;
     resetForm();
     FIELDS.forEach(([id, k]) => { $(id).value = e[k] == null ? "" : e[k]; });
+    $("i-who").value = peopleOf(e).join(", ");
     if (!$("i-aud").value) $("i-aud").value = "all";
     if (e.date_end === e.date_start) $("i-end").value = "";
     renderDiscChecks(discsOf(e));
@@ -928,6 +982,7 @@
     $("i-url").value = normalizeUrl($("i-url").value);
     await lookupFormCity(); // gdyby ktoś wysłał formularz, nie wychodząc z pola „Miasto”
     FIELDS.forEach(([id, k]) => { data[k] = v(id) || null; });
+    data.instructors = parsePeople($("i-who").value);
     data.studio_id = matchStudio(data.venue, data.city);
     const geo = formGeo && formGeo.city === data.city ? formGeo : null; // bez pinezki uzupełni ją panel admina
     data.lat = geo ? geo.lat : null;

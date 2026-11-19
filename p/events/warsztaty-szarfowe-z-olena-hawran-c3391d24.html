@@ -22,15 +22,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Unbounded:wght@300;500;700&display=swap">
   <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach (ta sama liczba). -->
-  <link rel="stylesheet" href="styles.css?v=37">
+  <link rel="stylesheet" href="styles.css?v=38">
   <meta property="og:image:alt" content="Warsztaty szarfowe z Oleną Hawran, 5 gru 2026 · Bielany Wrocławskie · warsztaty">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "Warsztaty szarfowe z Oleną Hawran", "url": "https://aerial.cyrkarium.com/calendar/?e=warsztaty-szarfowe-z-olena-hawran-c3391d24", "image": "https://aerial.cyrkarium.com/p/og/events/warsztaty-szarfowe-z-olena-hawran-c3391d24.jpg", "startDate": "2026-12-05", "endDate": "2026-12-05", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "description": "Mikołajkowe warsztaty na szarfie z Oleną Hawran: wychowanką Ocelot Foundation w Legnicy, artystką występującą w Szwajcarii, Niemczech i na Węgrzech, prowadzącą własną szkołę akrobatyki powietrznej w Przemyślu. Nowe elementy, dynamiczne triki, technika wybicia, kontrola ciała w ruchu, płynne…", "location": {"@type": "Place", "name": "Centrum Aerial Circus, ul. Wrocławska 7", "address": {"@type": "PostalAddress", "addressLocality": "Bielany Wrocławskie", "addressCountry": "PL"}}, "organizer": {"@type": "Organization", "name": "Grupa Magnifica · Centrum Aerial Circus", "url": "https://aerial.cyrkarium.com/studios/centrum-aerial-circus-magnifica-bielany-wroclawskie"}, "offers": {"@type": "Offer", "url": "https://www.facebook.com/grupamagnifica", "price": 240, "priceCurrency": "PLN", "validFrom": "2026-11-18", "availability": "https://schema.org/InStock"}}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "Warsztaty szarfowe z Oleną Hawran", "url": "https://aerial.cyrkarium.com/calendar/?e=warsztaty-szarfowe-z-olena-hawran-c3391d24", "image": "https://aerial.cyrkarium.com/p/og/events/warsztaty-szarfowe-z-olena-hawran-c3391d24.jpg", "startDate": "2026-12-05", "endDate": "2026-12-05", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "description": "Mikołajkowe warsztaty na szarfie z Oleną Hawran: wychowanką Ocelot Foundation w Legnicy, artystką występującą w Szwajcarii, Niemczech i na Węgrzech, prowadzącą własną szkołę akrobatyki powietrznej w Przemyślu. Nowe elementy, dynamiczne triki, technika wybicia, kontrola ciała w ruchu, płynne…", "location": {"@type": "Place", "name": "Centrum Aerial Circus, ul. Wrocławska 7", "address": {"@type": "PostalAddress", "addressLocality": "Bielany Wrocławskie", "addressCountry": "PL"}}, "performer": [{"@type": "Person", "name": "Olena Hawran"}], "organizer": {"@type": "Organization", "name": "Grupa Magnifica · Centrum Aerial Circus", "url": "https://aerial.cyrkarium.com/studios/centrum-aerial-circus-magnifica-bielany-wroclawskie"}, "offers": {"@type": "Offer", "url": "https://www.facebook.com/grupamagnifica", "price": 240, "priceCurrency": "PLN", "validFrom": "2026-11-18", "availability": "https://schema.org/InStock"}}</script>
   <!-- wygenerowane przez tools/prerender.py, nie edytuj ręcznie -->
 </head>
 <body>
 <article id="seo-static" style="max-width:720px;margin:24px auto;padding:0 16px;font-family:sans-serif;line-height:1.5">
 <h1>Warsztaty szarfowe z Oleną Hawran</h1>
 <p>5 gru 2026 · Bielany Wrocławskie · warsztaty</p>
+<p>Prowadzi: Olena Hawran</p>
 <p>Centrum Aerial Circus, ul. Wrocławska 7 · Organizator: Grupa Magnifica · Centrum Aerial Circus</p>
 <p>Mikołajkowe warsztaty na szarfie z Oleną Hawran: wychowanką Ocelot Foundation w Legnicy, artystką występującą w Szwajcarii, Niemczech i na Węgrzech, prowadzącą własną szkołę akrobatyki powietrznej w Przemyślu.</p><p>Nowe elementy, dynamiczne triki, technika wybicia, kontrola ciała w ruchu, płynne przejścia i widowiskowe sekwencje.</p><p>Bloki do wyboru:</p><p>• 10:00–12:00 Blok I: poziom średniozaawansowany i zaawansowany.</p><p>• 12:15–14:15 Blok II: dla trenerów, dodatkowo asekuracja w dynamice.</p><p>• 14:45–16:45 Blok III: młodzież 10–16 lat, która wchodzi na szarfę nakrywką, ale nie jest jeszcze zaawansowana.</p><p>Cena: 240 zł za blok. Liczba miejsc ograniczona. Zapisy mailowo u organizatora (kontakt w ogłoszeniu na profilu Grupy Magnifica).</p>
 <p><a href="https://www.facebook.com/grupamagnifica">Zapisy i szczegóły</a></p>
@@ -99,6 +100,7 @@
   <!-- KALENDARZ -->
   <section id="view-events" class="view">
     <div class="filters">
+      <div class="with-bar" id="with-bar" hidden></div>
       <div class="chips" id="type-chips"></div>
       <div class="selects">
         <input id="f-q" type="search" data-ph="search" data-aria="search" autocomplete="off">
@@ -133,6 +135,7 @@
         <div class="field"><label for="i-aud" data-i="fAudience"></label><select id="i-aud"></select></div>
         <div class="field full"><span class="field-label" id="disc-label" data-i="fDisc"></span><div class="checks" id="i-disc" role="group" aria-labelledby="disc-label"></div><span class="hint" data-i="hDisc"></span></div>
         <div class="field full"><label for="i-org" data-i="fOrg"></label><input id="i-org" maxlength="100"></div>
+        <div class="field full"><label for="i-who" data-i="fWho"></label><input id="i-who" maxlength="600" data-ph="fWhoPh" autocomplete="off"><span class="hint" data-i="hWho"></span></div>
       </fieldset>
       <fieldset>
         <legend data-i="lgWhen"></legend>
@@ -195,8 +198,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
-<script src="i18n.js?v=39"></script>
-<script src="app.js?v=39"></script>
+<script src="i18n.js?v=40"></script>
+<script src="app.js?v=40"></script>
 <!-- statystyki odwiedzin bez cookies (GoatCounter, panel: aerial-cyrkarium.goatcounter.com) -->
 <script data-goatcounter="https://aerial-cyrkarium.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>

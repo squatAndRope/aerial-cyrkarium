@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Unbounded:wght@300;500;700&display=swap">
   <!-- Po każdej zmianie w styles.css, i18n.js albo app.js podbij V we wszystkich trzech miejscach (ta sama liczba). -->
-  <link rel="stylesheet" href="styles.css?v=37">
+  <link rel="stylesheet" href="styles.css?v=38">
   <meta property="og:image:alt" content="Szkolenie instruktorskie Aerial Hoop Basic, 16–17 sty 2027 · Łódź · kurs / szkolenie">
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "Szkolenie instruktorskie Aerial Hoop Basic", "url": "https://aerial.cyrkarium.com/calendar/?e=szkolenie-instruktorskie-aerial-hoop-basic-9702d99f", "image": "https://aerial.cyrkarium.com/p/og/events/szkolenie-instruktorskie-aerial-hoop-basic-9702d99f.jpg", "startDate": "2027-01-16", "endDate": "2027-01-17", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "description": "Weekendowe szkolenie instruktorskie z koła aerial na poziomie podstawowym, zakończone certyfikatem i legitymacją instruktora. Zajęcia w sobotę i niedzielę w godzinach 9:00–18:30. Wymagany mniej więcej roczny staż treningowy w aerialu lub pole dance, przyjmowane są osoby od 16 lat. Grupy liczą od 4…", "location": {"@type": "Place", "name": "Klub Aerial, ul. Brukowa 6", "address": {"@type": "PostalAddress", "addressLocality": "Łódź", "addressCountry": "PL"}}, "organizer": {"@type": "Organization", "name": "FR Sport Group / Flying Rose"}, "offers": {"@type": "Offer", "url": "https://www.flyingrose.pl/szkolenie-instruktorskie-z-legitymacja-Aerial-Hoop-Basic", "price": 1599, "priceCurrency": "PLN", "validFrom": "2026-11-14", "availability": "https://schema.org/InStock"}}</script>
   <!-- wygenerowane przez tools/prerender.py, nie edytuj ręcznie -->
@@ -99,6 +99,7 @@
   <!-- KALENDARZ -->
   <section id="view-events" class="view">
     <div class="filters">
+      <div class="with-bar" id="with-bar" hidden></div>
       <div class="chips" id="type-chips"></div>
       <div class="selects">
         <input id="f-q" type="search" data-ph="search" data-aria="search" autocomplete="off">
@@ -133,6 +134,7 @@
         <div class="field"><label for="i-aud" data-i="fAudience"></label><select id="i-aud"></select></div>
         <div class="field full"><span class="field-label" id="disc-label" data-i="fDisc"></span><div class="checks" id="i-disc" role="group" aria-labelledby="disc-label"></div><span class="hint" data-i="hDisc"></span></div>
         <div class="field full"><label for="i-org" data-i="fOrg"></label><input id="i-org" maxlength="100"></div>
+        <div class="field full"><label for="i-who" data-i="fWho"></label><input id="i-who" maxlength="600" data-ph="fWhoPh" autocomplete="off"><span class="hint" data-i="hWho"></span></div>
       </fieldset>
       <fieldset>
         <legend data-i="lgWhen"></legend>
@@ -195,8 +197,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
-<script src="i18n.js?v=39"></script>
-<script src="app.js?v=39"></script>
+<script src="i18n.js?v=40"></script>
+<script src="app.js?v=40"></script>
 <!-- statystyki odwiedzin bez cookies (GoatCounter, panel: aerial-cyrkarium.goatcounter.com) -->
 <script data-goatcounter="https://aerial-cyrkarium.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>

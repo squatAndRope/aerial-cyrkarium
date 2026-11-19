@@ -292,7 +292,7 @@ def when(a, b):
 
 studio_by_id = {s["id"]: s for s in studios}
 since = (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
-events = [ev for ev in get("events", "id,title,type,date_start,date_end,city,venue,organizer,description,price_pln,is_free,reg_url,reg_deadline,created_at,studio_id", order="date_start")
+events = [ev for ev in get("events", "id,title,type,date_start,date_end,city,venue,organizer,description,price_pln,is_free,reg_url,reg_deadline,created_at,studio_id,instructors", order="date_start")
           if (ev.get("date_end") or ev.get("date_start") or "") >= since]
 for ev in events:
     param = "-".join(x for x in [slugify(ev["title"] or "")[:50].rstrip("-"), ev["id"][:8]] if x)
@@ -306,6 +306,9 @@ for ev in events:
           "description": short(ev.get("description") or line2, 300),
           "location": {"@type": "Place", "name": ev.get("venue") or ev.get("city"),
                        "address": {"@type": "PostalAddress", "addressLocality": ev.get("city"), "addressCountry": "PL"}}}
+    people = [x for x in (ev.get("instructors") or []) if x]
+    if people:
+        ld["performer"] = [{"@type": "Person", "name": x} for x in people]
     host = studio_by_id.get(ev.get("studio_id"))
     if ev.get("organizer") or host:
         ld["organizer"] = {"@type": "Organization", "name": ev.get("organizer") or host["name"]}
@@ -323,6 +326,7 @@ for ev in events:
     body = static_block([
         f"<h1>{esc(ev['title'])}</h1>",
         para(line2),
+        f"<p>Prowadzi: {esc(', '.join(people))}</p>" if people else "",
         para(ev.get("venue"), ev.get("organizer") and f"Organizator: {ev['organizer']}"),
         text_block(ev.get("description")),
         f"<p>{a(ev.get('reg_url'), 'Zapisy i szczegóły')}</p>" if ev.get("reg_url") else "",
