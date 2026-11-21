@@ -340,6 +340,33 @@
     say("ok", t().reportThanks);
     countClick("zgloszenie/" + f.dataset.rkind, "Zgłoś nieaktualne dane");
   });
+  // Cyrkomnienia (wspomnienia z warsztatów na cyrkarium.com): moderacja w panelu admina
+  const MEM_PHOTOS = CFG.supabaseUrl + "/storage/v1/object/public/memories/";
+  async function loadMemories() {
+    if (DEMO || !state.isAdmin) { state.memories = []; return; }
+    const { data, error } = await state.sb.from("memories").select("*").order("created_at", { ascending: false });
+    if (error) { console.warn("memories:", error.message); state.memories = []; return; }
+    state.memories = (data || []).sort((a, b) => (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1));
+    // zdjęcia z niewysłanych formularzy: raz na wizytę
+    if (!state.memSweep) { state.memSweep = true; const { data: orphans } = await state.sb.rpc("memory_orphan_photos"); if (orphans?.length) state.sb.storage.from("memories").remove(orphans); }
+  }
+  function memoryRow(m) {
+    const st = m.status;
+    const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
+    const who = m.anonymous ? t().memAnon : [m.author_name, m.instagram && "@" + m.instagram].filter(Boolean).join(" · ");
+    return `<div class="mine-row">
+      <div class="mine-head"><strong>${esc(who)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      <span class="small">${esc(new Date(m.created_at).toLocaleString(t().locale, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}${m.workshop ? " · " + esc(m.workshop) : ""}${m.lang ? " · " + esc(m.lang.toUpperCase()) : ""}</span>
+      ${m.photo_path ? `<a href="${esc(MEM_PHOTOS + m.photo_path)}" target="_blank" rel="noopener"><img src="${esc(MEM_PHOTOS + m.photo_path)}" alt="" loading="lazy" style="max-width:220px;border-radius:8px"></a>` : ""}
+      <span style="white-space:pre-line">${esc(m.content)}</span>
+      ${m.instagram ? `<a class="small" href="https://www.instagram.com/${esc(m.instagram)}/" target="_blank" rel="noopener">instagram.com/${esc(m.instagram)}</a>` : ""}
+      <div class="form-actions">
+        ${st !== "approved" ? `<button type="button" class="btn ok" data-mapprove="${esc(m.id)}">${esc(t().memPublish)}</button>` : ""}
+        ${st !== "rejected" ? `<button type="button" class="btn ghost" data-mhide="${esc(m.id)}">${esc(st === "approved" ? t().memUnpublish : t().memSkip)}</button>` : ""}
+        <button type="button" class="btn bad" data-mdel="${esc(m.id)}">${esc(t().memDelete)}</button>
+      </div>
+    </div>`;
+  }
   function reportRow(r) {
     const s = r.studio_id ? state.studios.find((x) => String(x.id) === String(r.studio_id)) : null;
     const m = r.maker_id ? state.makers.find((x) => String(x.id) === String(r.maker_id)) : null;
@@ -1247,6 +1274,7 @@
 
   function renderMine() {
     sweepPhotos();
+    if (state.isAdmin && state.memories == null && !state.memoriesLoading) { state.memoriesLoading = true; loadMemories().then(() => { state.memoriesLoading = false; if (!$("view-moje").hidden) renderMine(); }); }
     if (state.isAdmin && state.reports == null && !state.reportsLoading) { state.reportsLoading = true; loadReports().then(() => { state.reportsLoading = false; if (!$("view-moje").hidden) renderMine(); }); }
     const box = $("mine-box");
     box.innerHTML = "";
@@ -1271,7 +1299,7 @@
     ].sort((a, b) => newest(a.x, b.x));
 
     const tabs = [
-      ...(state.isAdmin ? [["review", t().tabReview, queue.length], ["reports", t().tabReports, (state.reports || []).length], ["published", t().tabPublished, published.length]] : []),
+      ...(state.isAdmin ? [["review", t().tabReview, queue.length], ["reports", t().tabReports, (state.reports || []).length], ["published", t().tabPublished, published.length], ["memories", t().tabMemories, (state.memories || []).filter((m) => m.status === "pending").length]] : []),
       ["listings", t().mineListings, mine.listings.length],
       ["studios", t().mineStudios, mine.studios.length],
       ["makers", t().mineMakers, mine.makers.length],
@@ -1282,6 +1310,7 @@
     let body = "";
     if (tab === "review") body = queue.length ? `<p class="small">${esc(t().reviewHint)}</p>` + queue.map((q) => q.html()).join("") : `<p class="muted">${esc(t().modEmpty)}</p>`;
     else if (tab === "reports") body = state.reports == null ? `<p class="muted">…</p>` : state.reports.length ? `<p class="small">${esc(t().reportsHint)}</p>` + state.reports.map(reportRow).join("") : `<p class="muted">${esc(t().reportsEmpty)}</p>`;
+    else if (tab === "memories") body = state.memories == null ? `<p class="muted">…</p>` : `<p class="small">${esc(t().memHint)}</p>` + (state.memories.length ? state.memories.map(memoryRow).join("") : `<p class="muted">${esc(t().memEmpty)}</p>`);
     else if (tab === "published") body = published.length ? published.map((q) => `<div class="mine-row pub-row">
         <div class="mine-head"><strong>${esc(q.title)}</strong><span class="type-badge">${esc(q.type)}</span></div>
         ${stamp(q.x)}
@@ -1399,7 +1428,7 @@
     const b = e.target.closest("button");
     if (!b) return;
     const d = b.dataset;
-    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.rdone || d.rdel || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
+    if (DEMO && (d.approve || d.reject || d.remove || d.verify || d.unsource || d.rdone || d.rdel || d.lapprove || d.lreject || d.lclose || d.lremove || d.kapprove || d.kreject || d.kremove || d.kverify || d.mapprove || d.mhide || d.mdel)) { notice("demo: nic nie zostało zapisane", "warn"); return; }
     if (d.lang) { lang = d.lang; store.set("ac-lang", lang); applyTexts(); renderAccount(); setPrivacyHref(); route(); }
     else if (d.gphoto) {
       $("g-main").src = photoUrl(d.gphoto); $("g-main-link").href = photoUrl(d.gphoto);
@@ -1429,6 +1458,18 @@
     }
     else if (d.reject) updateStudio(d.reject, { status: "rejected", rejection_reason: ($("reason-" + d.reject)?.value || "").trim() || null });
     else if (d.mtab) { state.mineTab = d.mtab; renderMine(); }
+    else if (d.mapprove || d.mhide || d.mdel) {
+      if (d.mdel && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
+      const id = d.mapprove || d.mhide || d.mdel;
+      const m = (state.memories || []).find((x) => String(x.id) === id);
+      let error;
+      if (d.mdel) {
+        ({ error } = await state.sb.from("memories").delete().eq("id", id));
+        if (!error && m?.photo_path) await state.sb.storage.from("memories").remove([m.photo_path]);
+      } else ({ error } = await state.sb.from("memories").update({ status: d.mapprove ? "approved" : "rejected" }).eq("id", id));
+      if (error) { notice(t().errSave, "bad"); console.warn(error); return; }
+      await loadMemories(); renderMine();
+    }
     else if (d.rdone || d.rdel) {
       if (d.rdel && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = t().removeConfirm; return; }
       const id = d.rdone || d.rdel;

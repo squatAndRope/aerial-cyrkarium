@@ -12,6 +12,7 @@
 //                               zatwierdzone / odrzucone do autora, przejęcie profilu do adminów
 //   • makers INSERT/UPDATE    → jak studia
 //   • entry_reports INSERT    → zgłoszenie nieaktualnych danych do adminów
+//   • memories INSERT         → nowe Cyrkomnienie (wspomnienie z warsztatów na cyrkarium.com) do adminów
 //
 // Sekrety (Edge Functions → Secrets), te same co dla „notify”:
 //   RESEND_API_KEY, WEBHOOK_SECRET
@@ -287,6 +288,21 @@ export function adminReportMail(r: Row, target: Row | null, kind: "studio" | "ma
   };
 }
 
+export function adminMemoryMail(m: Row, admins: string[], supabaseUrl: string): Mail {
+  const who = m.anonymous ? "anonimowo" : [m.author_name, m.instagram && "@" + m.instagram].filter(Boolean).join(" · ");
+  const photo = m.photo_path ? `${supabaseUrl}/storage/v1/object/public/memories/${m.photo_path}` : "";
+  return {
+    to: admins,
+    subject: `Nowe Cyrkomnienie: ${who}`,
+    html: layout(p(`Ktoś podzielił się wspomnieniem z warsztatów na <strong>cyrkarium.com</strong> (${esc(who)}).`) +
+      (m.workshop ? details([["Warsztaty", esc(m.workshop)]]) : "") + quote(m.content) +
+      (photo ? `<p style="margin:0 0 14px;"><img src="${esc(photo)}" alt="" width="260" style="max-width:260px;border-radius:8px;"></p>` : "") +
+      p("Opublikujesz je albo odrzucisz w panelu admina, w zakładce <strong>Cyrkomnienia</strong>.", 13, C.muted) +
+      button(`${SITE}/account/`, "Otwórz Cyrkomnienia")),
+    text: `Nowe Cyrkomnienie (${who})\n${m.workshop ? "Warsztaty: " + m.workshop + "\n" : ""}${m.content}\n${photo}\n\n${SITE}/account/`,
+  };
+}
+
 export function adminClaimMail(s: Row, ownerEmail: string, admins: string[]): Mail {
   return {
     to: admins,
@@ -301,12 +317,13 @@ export function adminClaimMail(s: Row, ownerEmail: string, admins: string[]): Ma
 // --- kto dostaje maila (czysta funkcja) ---------------------------------
 export type Kind = "message" | "admin_listing_new" | "admin_listing_edited" | "author_listing"
   | "admin_studio_new" | "admin_studio_edited" | "owner_studio" | "admin_claim"
-  | "admin_maker_new" | "admin_maker_edited" | "owner_maker" | "admin_report";
+  | "admin_maker_new" | "admin_maker_edited" | "owner_maker" | "admin_report" | "admin_memory";
 export function decide(pl: Payload): Kind | null {
   if (pl.schema !== "public" || !pl.record) return null;
   const r = pl.record, o = pl.old_record;
   if (pl.table === "listing_messages") return pl.type === "INSERT" ? "message" : null;
   if (pl.table === "entry_reports") return pl.type === "INSERT" ? "admin_report" : null;
+  if (pl.table === "memories") return pl.type === "INSERT" && r.status === "pending" ? "admin_memory" : null;
   if (pl.table === "listings") {
     if (pl.type === "INSERT") return r.status === "pending" ? "admin_listing_new" : null;
     if (pl.type !== "UPDATE" || !o || o.status === r.status) return null;
@@ -388,6 +405,9 @@ Deno.serve(async (req) => {
     const isStudio = !!r.studio_id;
     const { data: target } = await sb.from(isStudio ? "studios" : "makers").select("id,name,city").eq("id", isStudio ? r.studio_id : r.maker_id).maybeSingle();
     mail = adminReportMail(r, target ?? null, isStudio ? "studio" : "maker", await admins());
+  }
+  else if (kind === "admin_memory") {
+    mail = adminMemoryMail(r, await admins(), Deno.env.get("SUPABASE_URL")!);
   }
   if (!mail || !mail.to.length) return json({ skipped: "no recipients" });
 
