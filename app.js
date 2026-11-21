@@ -355,7 +355,7 @@
     const kind = st === "approved" ? "ok" : st === "pending" ? "warn" : "bad";
     const who = m.anonymous ? t().memAnon : [m.author_name, m.instagram && "@" + m.instagram].filter(Boolean).join(" · ");
     return `<div class="mine-row">
-      <div class="mine-head"><strong>${esc(who)}</strong><span class="badge ${kind}">${esc(t().status[st])}</span></div>
+      <div class="mine-head"><strong>${esc(who)}</strong><span class="badge ${kind}">${esc(t().memStatus[st])}</span></div>
       <span class="small">${esc(new Date(m.created_at).toLocaleString(t().locale, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}${m.workshop ? " · " + esc(m.workshop) : ""}${m.lang ? " · " + esc(m.lang.toUpperCase()) : ""}</span>
       ${m.photo_path ? `<a href="${esc(MEM_PHOTOS + m.photo_path)}" target="_blank" rel="noopener"><img src="${esc(MEM_PHOTOS + m.photo_path)}" alt="" loading="lazy" style="max-width:220px;border-radius:8px"></a>` : ""}
       <span style="white-space:pre-line">${esc(m.content)}</span>
