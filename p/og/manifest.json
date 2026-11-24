@@ -48,6 +48,7 @@
 "cities/siedlce": "[\"Siedlce\", \"1 studio aerial · koło, szarfy\", \"\", 2]",
 "cities/starachowice": "[\"Starachowice\", \"1 studio aerial · szarfy, koło\", \"\", 2]",
 "cities/strzelce-kraj": "[\"Strzelce-Kraj\", \"1 studio aerial · koło\", \"\", 2]",
+"cities/suwalki": "[\"Suwałki\", \"1 studio aerial · koło, hamak, pole\", \"\", 2]",
 "cities/swarzedz": "[\"Swarzędz\", \"1 studio aerial · szarfy, hamak\", \"\", 2]",
 "cities/swidnik": "[\"Świdnik\", \"1 studio aerial · aerial joga\", \"\", 2]",
 "cities/swinoujscie": "[\"Świnoujście\", \"1 studio aerial · aerial joga, hamak, koło, pole\", \"\", 2]",
@@ -94,6 +95,7 @@
 "events/ptak-27-przeglad-tanca-akrobatycznego-w-powietrzu-935f71c8": "[\"PTAK'27 · Przegląd Tańca Akrobatycznego w Powietrzu\", \"19–20 cze 2027 · Poznań · zawody\", \"\", 2]",
 "events/spotkanie-pasjonatow-tanca-w-powietrzu-5c359eca": "[\"Spotkanie Pasjonatów Tańca w Powietrzu\", \"20–22 lis 2026 · Łódź · zjazd / jam\", \"\", 2]",
 "events/starcie-aniolow-ii-miedzynarodowy-turniej-akrobaty-9fc93a40": "[\"STARCIE ANIOŁÓW · II Międzynarodowy Turniej Akrobatyki Powietrznej\", \"19–21 lut 2027 · Gorzów Wielkopolski · zawody\", \"\", 2]",
+"events/swiateczne-jam-session-3684b432": "[\"ŚWIĄTECZNE JAM SESSION\", \"6 gru 2026 · Warszawa · zjazd / jam\", \"\", 2]",
 "events/swiateczno-noworoczna-sesja-zdjeciowa-na-kole-782080a4": "[\"Świąteczno-noworoczna sesja zdjęciowa na kole\", \"19 gru 2026 · Grudziądz · sesja zdjęciowa\", \"\", 2]",
 "events/szkolenie-instruktorskie-aerial-hoop-basic-2bc4febb": "[\"Szkolenie instruktorskie Aerial Hoop Basic\", \"28–29 lis 2026 · Łódź · kurs / szkolenie\", \"\", 2]",
 "events/szkolenie-instruktorskie-aerial-hoop-basic-350c85b2": "[\"Szkolenie instruktorskie Aerial Hoop Basic\", \"15–16 maj 2027 · Łódź · kurs / szkolenie\", \"\", 2]",
@@ -180,6 +182,7 @@
 "studios/klub-sportowy-supernova-pulawy": "[\"Klub Sportowy SUPERNOVA\", \"Puławy · szarfy, koło\", \"\", 2]",
 "studios/krakowska-sekcja-akrobatyki-powietrznej-krakow": "[\"Krakowska Sekcja Akrobatyki Powietrznej\", \"Kraków · szarfy, pasy\", \"\", 2]",
 "studios/laboratorium-umyslu-i-ciala-krakow": "[\"Laboratorium Umysłu i Ciała\", \"Kraków · aerial joga, koło\", \"\", 2]",
+"studios/lecimy-studio-suwalki": "[\"Lecimy Studio\", \"Suwałki · koło, hamak, pole\", \"5152bde5-6310-4759-9625-cf0afd53cb05/5f35d1fb-127b-425d-aa73-2d9dcede2f7f.png\", 2]",
 "studios/magifly-szkola-akrobatyki-powietrznej-kielce": "[\"Magifly Szkoła Akrobatyki Powietrznej\", \"Kielce · szarfy, koło\", \"\", 2]",
 "studios/mandala-torun": "[\"Mandala\", \"Toruń · aerial joga\", \"\", 2]",
 "studios/mira-art-szkola-tanca-akrobatycznego-gdynia": "[\"MIRA-ART Szkoła Tańca Akrobatycznego\", \"Gdynia · koło, szarfy\", \"\", 2]",
@@ -233,5 +236,5 @@
 "studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-siechnice": "[\"White Swan Studio Tańca i Akrobatyki Powietrznej\", \"Siechnice · inne przyrządy\", \"\", 2]",
 "studios/white-swan-studio-tanca-i-akrobatyki-powietrznej-wroclaw": "[\"White Swan Studio Tańca i Akrobatyki Powietrznej\", \"Wrocław · aerial joga, hamak, koło, szarfy\", \"\", 2]",
 "studios/zodiak-aerial-dance-studio-szczecin": "[\"Zodiak Aerial Dance Studio\", \"Szczecin · koło, szarfy, lina, hamak\", \"c84b6416-7201-4d70-8c7d-4ac2dd839488/5469447b-bd50-4a3e-b651-a10618184563.webp\", 2]",
-"studios/zuzu-spot-warszawa": "[\"ZuZu SPOT\", \"Warszawa · szarfy, koło\", \"\", 2]"
+"studios/zuzu-spot-warszawa": "[\"ZuZu SPOT\", \"Warszawa · koło, szarfy\", \"\", 2]"
 }
